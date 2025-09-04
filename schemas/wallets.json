@@ -1,0 +1,27 @@
+{
+  "_id": "wal_7f3a0c",
+  "agentDid": "did:nanda:zuername",
+  "type": "user",                          // user | treasury | fee_pool | escrow
+  "currency": "NP",
+  "scale": 3,
+  "balance": 502500,                       // integer minor units (mp)
+  "seq": 21,                               // per-wallet monotonic sequence
+
+  "limits": {
+    "dailySpend": 5000000,
+    "maxSingleTx": 1000000,
+    "allowOverdraft": false
+  },
+
+  "counters": {
+    "earnedToday": 250000,
+    "spentToday": 0,
+    "windowStart": "2025-09-02T00:00:00Z"
+  },
+
+  "status": "active",                      // active | suspended | closed
+  "labels": ["default","receive"],
+
+  "createdAt": "2025-09-02T11:00:00Z",
+  "updatedAt": "2025-09-02T17:05:02Z"
+}
