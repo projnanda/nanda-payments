@@ -1,0 +1,31 @@
+{
+  "name": "nanda-points-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "demo": "tsx src/demo.ts",
+    "start": "node --enable-source-maps dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "seed": "tsx src/seed.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5",
+    "morgan": "^1.10.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.17.0",
+    "typescript": "^5.5.4",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.12",
+    "@types/ws": "^8.5.10",
+    "@types/morgan": "^1.9.9",
+    "@types/cors": "^2.8.17"
+  }
+}
