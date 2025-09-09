@@ -1,0 +1,75 @@
+{
+  "_id": "agent_unified_123",
+  "did": "did:nanda:agent1",
+  "ethereumAddress": "0x8ba1f109551bD432803012645Hac136c",
+  
+  "identity": {
+    "agentName": "AI Research Specialist",
+    "label": "Research Agent",
+    "primaryFactsUrl": "https://list39.org/@agent1.json",
+    "factsDigest": "sha256:abc123...",
+    "verificationStatus": "verified"
+  },
+  
+  "wallets": {
+    "nandaPoints": {
+      "walletId": "wal_agent_123",
+      "balance": 50000,
+      "scale": 3,
+      "currency": "NP",
+      "lastUpdated": "2025-01-07T12:32:00Z"
+    },
+    "ethereum": {
+      "address": "0x8ba1f109551bD432803012645Hac136c",
+      "balance": "0.5",
+      "currency": "ETH",
+      "lastUpdated": "2025-01-07T12:32:00Z"
+    }
+  },
+  
+  "reputation": {
+    "score": 82,
+    "totalTasks": 15,
+    "successfulTasks": 14,
+    "averageRating": 87.5,
+    "lastUpdated": "2025-01-07T12:32:00Z",
+    "trend": "increasing",
+    "reliability": 0.93
+  },
+  
+  "specialties": [
+    "research",
+    "summarization",
+    "academic_writing",
+    "data_analysis"
+  ],
+  
+  "pricing": {
+    "minimumPrice": "0.001 ETH",
+    "nandaPointsRate": 1000,
+    "dynamicPricing": true,
+    "reputationMultiplier": 1.2,
+    "experienceMultiplier": 1.1
+  },
+  
+  "performance": {
+    "averageCompletionTime": "2.5 hours",
+    "successRate": 0.93,
+    "clientSatisfaction": 4.4,
+    "responseTime": "5 minutes",
+    "availability": "24/7"
+  },
+  
+  "earnings": {
+    "totalETH": "0.5",
+    "totalNP": 50000,
+    "thisMonthETH": "0.1",
+    "thisMonthNP": 10000,
+    "lifetimeEarnings": "2.5 ETH + 250000 NP"
+  },
+  
+  "status": "active",
+  "createdAt": "2025-01-01T00:00:00Z",
+  "lastActiveAt": "2025-01-07T12:32:00Z",
+  "updatedAt": "2025-01-07T12:32:00Z"
+}

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified AI Agent Marketplace - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .wallet-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wallet-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+            100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        }
+
+        .wallet-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+
+        .balance {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .transaction-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #666;
+            position: relative;
+            z-index: 2;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .point-transfer {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            animation: slideIn 1s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .point-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .websocket-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        .websocket-status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .websocket-status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .transaction-flow {
+                flex-direction: column;
+            }
+            
+            .flow-arrow {
+                transform: rotate(90deg);
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="websocket-status" id="wsStatus">Disconnected</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Unified AI Agent Marketplace</h1>
+            <p>Dual Payment System with Animated Point Transfers</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔑 Client Wallet</h2>
+            <div class="wallet-card">
+                <div class="wallet-info">
+                    <h3>Your Client Wallet</h3>
+                    <div class="wallet-address" id="walletAddress">Generating wallet...</div>
+                    <div class="balance">
+                        <div>💰 ETH Balance: <span id="ethBalance">0.0</span></div>
+                        <div>⭐ NP Balance: <span id="npBalance">0</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔄 Transaction Flow</h2>
+            <div class="transaction-flow">
+                <div class="flow-step">1</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">2</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">3</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">4</div>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <div>Client Selects Agent → ETH Deducted → NP Added → Task Completed</div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>💫 Animated Point Transfer</h2>
+            <div class="point-transfer" id="pointTransfer" style="display: none;">
+                <div>✨ NANDA Points Transfer ✨</div>
+                <div class="point-amount" id="pointAmount">+1,000 NP</div>
+                <div>Agent earned points for completing task!</div>
+            </div>
+            <button class="button" onclick="simulateTransfer()">Simulate Point Transfer</button>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎮 Demo Controls</h2>
+            <button class="button" onclick="createWallet()">Create New Wallet</button>
+            <button class="button" onclick="simulateTransaction()">Simulate Transaction</button>
+            <button class="button" onclick="connectWebSocket()">Connect WebSocket</button>
+            <div id="status" class="status info">Ready to start demo</div>
+        </div>
+
+        <div class="demo-section">
+            <h2>📊 Real-time Events</h2>
+            <div id="events" style="background: #f5f5f5; padding: 20px; border-radius: 10px; max-height: 300px; overflow-y: auto;">
+                <div>Waiting for events...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let walletData = null;
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function addEvent(message) {
+            const events = document.getElementById('events');
+            const eventDiv = document.createElement('div');
+            eventDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            events.insertBefore(eventDiv, events.firstChild);
+            
+            // Keep only last 10 events
+            while (events.children.length > 10) {
+                events.removeChild(events.lastChild);
+            }
+        }
+
+        function connectWebSocket() {
+            if (ws) {
+                ws.close();
+            }
+
+            ws = new WebSocket('ws://localhost:3000/ws');
+            
+            ws.onopen = function() {
+                document.getElementById('wsStatus').textContent = 'Connected';
+                document.getElementById('wsStatus').className = 'websocket-status connected';
+                updateStatus('WebSocket connected', 'success');
+                addEvent('WebSocket connected to server');
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                addEvent(`Received: ${data.type} - ${JSON.stringify(data)}`);
+            };
+
+            ws.onclose = function() {
+                document.getElementById('wsStatus').textContent = 'Disconnected';
+                document.getElementById('wsStatus').className = 'websocket-status disconnected';
+                updateStatus('WebSocket disconnected', 'error');
+                addEvent('WebSocket disconnected');
+            };
+
+            ws.onerror = function(error) {
+                updateStatus('WebSocket error', 'error');
+                addEvent('WebSocket error occurred');
+            };
+        }
+
+        async function createWallet() {
+            updateStatus('Creating wallet...', 'info');
+            addEvent('Creating new client wallet...');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/wallets/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        agentDid: `did:nanda:client_${Date.now()}`,
+                        generateNewKey: true
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    walletData = data.wallet;
+                    document.getElementById('walletAddress').textContent = data.wallet.ethereumAddress;
+                    document.getElementById('ethBalance').textContent = '0.0';
+                    document.getElementById('npBalance').textContent = '0';
+                    
+                    updateStatus('Wallet created successfully!', 'success');
+                    addEvent(`Wallet created: ${data.wallet.ethereumAddress}`);
+                    
+                    if (data.privateKey) {
+                        addEvent(`Private Key: ${data.privateKey.substring(0, 10)}...`);
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to create wallet');
+                }
+            } catch (error) {
+                updateStatus('Failed to create wallet: ' + error.message, 'error');
+                addEvent('Error: ' + error.message);
+            }
+        }
+
+        function simulateTransfer() {
+            const pointTransfer = document.getElementById('pointTransfer');
+            const pointAmount = document.getElementById('pointAmount');
+            
+            // Random amount between 500-2000
+            const amount = Math.floor(Math.random() * 1500) + 500;
+            pointAmount.textContent = `+${amount.toLocaleString()} NP`;
+            
+            pointTransfer.style.display = 'block';
+            addEvent(`Simulated point transfer: +${amount} NP`);
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                pointTransfer.style.display = 'none';
+            }, 3000);
+        }
+
+        async function simulateTransaction() {
+            if (!walletData) {
+                updateStatus('Please create a wallet first', 'error');
+                return;
+            }
+
+            updateStatus('Simulating transaction...', 'info');
+            addEvent('Simulating unified transaction...');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/transactions/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: 'unified_payment',
+                        clientDid: walletData.agentDid,
+                        agentDid: 'did:nanda:demo_agent',
+                        ethAmount: '0.001',
+                        npAmount: 1000,
+                        clientRating: Math.floor(Math.random() * 40) + 60, // 60-100
+                        idempotencyKey: `demo_${Date.now()}`,
+                        metadata: {
+                            tags: ['demo', 'simulation']
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateStatus('Transaction simulated successfully!', 'success');
+                    addEvent(`Transaction created: ${data.transaction.id}`);
+                    
+                    // Simulate balance update
+                    const currentNP = parseInt(document.getElementById('npBalance').textContent);
+                    document.getElementById('npBalance').textContent = (currentNP + 1000).toLocaleString();
+                    
+                    // Trigger point transfer animation
+                    simulateTransfer();
+                } else {
+                    throw new Error(data.error || 'Failed to create transaction');
+                }
+            } catch (error) {
+                updateStatus('Failed to simulate transaction: ' + error.message, 'error');
+                addEvent('Error: ' + error.message);
+            }
+        }
+
+        // Auto-connect WebSocket on page load
+        window.onload = function() {
+            addEvent('Demo page loaded');
+            connectWebSocket();
+        };
+    </script>
+</body>
+</html>
