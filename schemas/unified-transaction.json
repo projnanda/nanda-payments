@@ -1,0 +1,81 @@
+{
+  "_id": "tx_unified_123",
+  "type": "unified_payment",
+  "status": "completed",
+  
+  "client": {
+    "did": "did:nanda:client1",
+    "ethereumAddress": "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+    "walletId": "wal_client_123"
+  },
+  
+  "agent": {
+    "did": "did:nanda:agent1",
+    "ethereumAddress": "0x8ba1f109551bD432803012645Hac136c",
+    "walletId": "wal_agent_123",
+    "reputationScore": 85
+  },
+  
+  "task": {
+    "taskId": "task_456",
+    "description": "Research and summarize latest AI paper",
+    "category": "research",
+    "complexity": "medium",
+    "estimatedDuration": "2 hours"
+  },
+  
+  "payments": {
+    "ethereum": {
+      "amount": "0.001",
+      "currency": "ETH",
+      "txHash": "0x1234567890abcdef...",
+      "blockNumber": 12345678,
+      "gasUsed": 21000,
+      "gasPrice": "20000000000"
+    },
+    "nandaPoints": {
+      "amount": 1000,
+      "currency": "NP",
+      "scale": 3,
+      "baseAmount": 1000,
+      "performanceBonus": 500,
+      "reputationBonus": 200,
+      "totalEarned": 1700
+    }
+  },
+  
+  "reputation": {
+    "clientRating": 85,
+    "previousScore": 80,
+    "newScore": 82,
+    "factors": {
+      "ratingWeight": 0.6,
+      "reputationWeight": 0.4,
+      "experienceBonus": 5,
+      "consistencyBonus": 3
+    }
+  },
+  
+  "exchange": {
+    "rate": 1000000,
+    "npToEth": 0.001,
+    "ethToNp": 1000,
+    "conversionTx": "0xabcdef1234567890..."
+  },
+  
+  "timestamps": {
+    "createdAt": "2025-01-07T10:00:00Z",
+    "taskAssignedAt": "2025-01-07T10:01:00Z",
+    "taskCompletedAt": "2025-01-07T12:30:00Z",
+    "paymentProcessedAt": "2025-01-07T12:31:00Z",
+    "reputationUpdatedAt": "2025-01-07T12:32:00Z"
+  },
+  
+  "metadata": {
+    "platform": "unified-marketplace",
+    "version": "1.0.0",
+    "clientSatisfaction": "high",
+    "agentPerformance": "excellent",
+    "tags": ["research", "ai", "summarization"]
+  }
+}
