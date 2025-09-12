@@ -2,7 +2,7 @@ import mongoose, { Schema, InferSchemaType } from "mongoose";
 import { NP_CURRENCY, NP_SCALE } from "./constants.js";
 
 const InvoiceSchema = new Schema({
-  invoiceNumber: { type: String, required: true, unique: true },
+  invoiceNumber: { type: String, unique: true }, // Removed required as it's auto-generated
   status: { 
     type: String, 
     enum: ["draft", "issued", "paid", "cancelled", "expired"],

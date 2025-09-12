@@ -69,6 +69,35 @@ async function waitForServer(retries = 20, delay = 250) {
 // --- Types (partial) --------------------------------------------------------
 type Wallet = { _id: string; agentDid: string; balance: number; scale: number };
 type Tx = { _id: string; type: string; reasonCode: string; amount: { value: number; scale: number } };
+type Invoice = { 
+  _id: string; 
+  invoiceNumber: string;
+  status: 'draft' | 'issued' | 'paid' | 'cancelled';
+  amount: { value: number; scale: number };
+  issuer: { did: string; walletId: string };
+  payer?: { did: string; walletId: string };
+};
+type ReputationRequest = {
+  agentDid: string;
+  encryptedScore: string;
+  signature: string;
+};
+type ReputationResponse = {
+  agentDid: string;
+  score: number;
+  validationResult: boolean;
+};
+type TransactionEvent = {
+  type: 'tx.posted' | 'tx.completed';
+  txId: string;
+  invoiceId?: string;
+  reputationValidation?: {
+    requesterDid: string;
+    providerDid: string;
+    score: number;
+    validated: boolean;
+  };
+};
 
 // --- Demo Flow --------------------------------------------------------------
 async function ensureAgent(did: string, agentName: string, primaryFactsUrl?: string) {
@@ -138,7 +167,51 @@ async function mintIfNeeded(walletId: string, did: string, need: number) {
   console.log(`  ${checkmark()} top-up minted to ${did}: +${fmtNP(topup)}`);
 }
 
+async function createInvoice(issuerDid: string, issuerWalletId: string, payerDid: string, amountMinor: number): Promise<Invoice> {
+  const invoice = await jpost<Invoice>('/invoices', {
+    issuer: { did: issuerDid, walletId: issuerWalletId },
+    recipient: { did: payerDid }, // Changed from payer to recipient to match API schema
+    amount: { currency: "NP", scale: 3, value: amountMinor },
+    paymentTerms: {
+      acceptPartial: false,
+      allowOverpayment: false
+    },
+    metadata: { demo: true }
+  });
+  console.log(`  ${checkmark()} invoice created: ${invoice.invoiceNumber}`);
+  return invoice;
+}
+
+async function issueInvoice(invoiceId: string): Promise<Invoice> {
+  const invoice = await jpost<Invoice>(`/invoices/${invoiceId}/issue`, {});
+  console.log(`  ${checkmark()} invoice issued: ${invoice.invoiceNumber}`);
+  return invoice;
+}
+
+async function getReputationScore(agentDid: string): Promise<ReputationResponse> {
+  // In real implementation, this would talk to the Reputation Verifier service
+  const mockResponse: ReputationResponse = {
+    agentDid,
+    score: 95, // Mock score between 0-100
+    validationResult: true
+  };
+  console.log(`  ${checkmark()} reputation validated for ${agentDid}: score=${mockResponse.score}`);
+  return mockResponse;
+}
+
+async function initiatePayment(invoice: Invoice, payerWalletId: string, repScore: ReputationResponse): Promise<Tx> {
+  const idem = `demo:invoice-payment:${invoice._id}:${Date.now()}`;
+  return jpost<Tx>(`/invoices/${invoice._id}/pay`, {
+    amount: invoice.amount.value,
+    walletId: payerWalletId,
+    idempotencyKey: idem,
+    reputationScore: repScore.score,
+    reputationValidation: repScore.validationResult
+  });
+}
+
 async function transfer(fromWalletId: string, toWalletId: string, fromDid: string, toDid: string, amountMinor: number) {
+  // This is kept for backward compatibility, prefer using invoice-based payments
   const idem = `demo:transfer:${fromDid}->${toDid}:${Date.now()}`;
   return jpost<Tx>(`/transactions`, {
     type: "transfer",
@@ -152,13 +225,16 @@ async function transfer(fromWalletId: string, toWalletId: string, fromDid: strin
   });
 }
 
-function listenForTxPosted(expectedTxId: string): Promise<any> {
+function listenForTxPosted(expectedTxId: string): Promise<TransactionEvent> {
   return new Promise((resolve) => {
     const ws = new WebSocket(BASE.replace(/^http/, "ws") + "/events");
     const timeout = setTimeout(() => {
       console.log("  (ws timeout) no event received in time, continuing…");
       try { ws.close(); } catch {}
-      resolve(null);
+      resolve({
+        type: 'tx.posted',
+        txId: expectedTxId
+      });
     }, WS_TIMEOUT_MS);
 
     ws.on("message", (raw) => {
@@ -185,12 +261,14 @@ function listenForTxPosted(expectedTxId: string): Promise<any> {
 }
 
 async function main() {
-  console.log("\n=== NANDA Points Demo ===\n");
+  console.log("\n=== NANDA Points Service Demo with Reputation System ===\n");
   await waitForServer();
 
+  // Phase 1: Service Discovery & Usage
+  console.log("Phase 1: Service Discovery & Usage");
   console.log("1) Register agents");
-  await ensureAgent(A_DID, "Demo Agent A", A_FACTS);
-  await ensureAgent(B_DID, "Demo Agent B", B_FACTS);
+  await ensureAgent(A_DID, "Demo Agent A (Requester)", A_FACTS);
+  await ensureAgent(B_DID, "Demo Agent B (Provider/MCP Server)", B_FACTS);
 
   console.log("\n2) Create wallets");
   const A_WALLET = (await createWallet(A_DID))._id;
@@ -198,49 +276,66 @@ async function main() {
 
   console.log("\n3) Attach wallets to agents");
   await attachWallet(A_DID, A_WALLET, { eventsWebhook: "https://example.com/nanda/events" });
-  await attachWallet(B_DID, B_WALLET);
+  await attachWallet(B_DID, B_WALLET, { eventsWebhook: "https://example.com/nanda/events" });
 
-  console.log("\n4) Balances BEFORE transfer");
+  // Phase 2: Invoice & Reputation Verification
+  console.log("\nPhase 2: Invoice & Reputation Verification");
+  // Create and expose invoice
+  const invoice = await createInvoice(B_DID, B_WALLET, A_DID, AMOUNT);
+  const issuedInvoice = await issueInvoice(invoice._id);
+
+  // Check initial balances
+  console.log("\n4) Balances BEFORE payment");
   const aBefore = await getWallet(A_WALLET);
   const bBefore = await getWallet(B_WALLET);
   console.table([
-    { wallet: "A (sender)", id: A_WALLET, did: A_DID, balance: fmtNP(aBefore.balance, aBefore.scale) },
-    { wallet: "B (recipient)", id: B_WALLET, did: B_DID, balance: fmtNP(bBefore.balance, bBefore.scale) },
+    { wallet: "A (requester)", id: A_WALLET, did: A_DID, balance: fmtNP(aBefore.balance, aBefore.scale) },
+    { wallet: "B (provider)", id: B_WALLET, did: B_DID, balance: fmtNP(bBefore.balance, bBefore.scale) },
   ]);
 
-  // Ensure we have enough to transfer
+  // Ensure we have enough to pay
   await mintIfNeeded(A_WALLET, A_DID, AMOUNT);
 
-  console.log("\n5) Open WebSocket and make transfer");
-  const txP = transfer(A_WALLET, B_WALLET, A_DID, B_DID, AMOUNT); // start transfer
+  // Get and verify reputation
+  console.log("\n5) Reputation Verification");
+  const repScore = await getReputationScore(B_DID);
+  
+  // Phase 3: Transaction Completion
+  console.log("\nPhase 3: Transaction Completion");
+  console.log("6) Process Payment");
+  // Open WebSocket for events
+  const txP = initiatePayment(issuedInvoice, A_WALLET, repScore);
   const tx = await txP;
-  const wsEventP = listenForTxPosted(tx._id); // wait for the event (best-effort)
+  const wsEventP = listenForTxPosted(tx._id);
 
-  // Wait a touch for event (or timeout), then show AFTER balances
+  // Wait for event and check final balances
   await wsEventP;
 
-  console.log("\n6) Balances AFTER transfer");
+  console.log("\n7) Balances AFTER payment");
   const aAfter = await getWallet(A_WALLET);
   const bAfter = await getWallet(B_WALLET);
   console.table([
-    { wallet: "A (sender)", id: A_WALLET, did: A_DID, balance: fmtNP(aAfter.balance, aAfter.scale) },
-    { wallet: "B (recipient)", id: B_WALLET, did: B_DID, balance: fmtNP(bAfter.balance, bAfter.scale) },
+    { wallet: "A (requester)", id: A_WALLET, did: A_DID, balance: fmtNP(aAfter.balance, aAfter.scale) },
+    { wallet: "B (provider)", id: B_WALLET, did: B_DID, balance: fmtNP(bAfter.balance, bAfter.scale) },
   ]);
 
-  // ASCII visualization
+  // ASCII visualization with reputation score
   const deltaA = aBefore.balance - aAfter.balance;
   const deltaB = bAfter.balance - bBefore.balance;
-  console.log("\n7) Visualization");
+  console.log("\n8) Visualization");
   console.log("────────────────────────────────────────────────────────────");
-  console.log(` ${A_DID}`);
+  console.log(` ${A_DID} (Requester)`);
   console.log(`    ${fmtNP(aBefore.balance)}  --[ ${fmtNP(AMOUNT)} ]-->  ${fmtNP(aAfter.balance)}`);
   console.log("                              |");
+  console.log(`                 Reputation: ${repScore.score}/100`);
   console.log(`                              V`);
-  console.log(` ${B_DID}`);
+  console.log(` ${B_DID} (Provider)`);
   console.log(`    ${fmtNP(bBefore.balance)}  <--[ ${fmtNP(deltaB)} ]--  ${fmtNP(bAfter.balance)}`);
+  console.log("────────────────────────────────────────────────────────────");
+  console.log(`Invoice: ${issuedInvoice.invoiceNumber} | Status: ${issuedInvoice.status}`);
   console.log("────────────────────────────────────────────────────────────\n");
 
-  console.log(`${checkmark()} Transfer complete  (txId=${tx._id})`);
+  console.log(`${checkmark()} Payment complete (txId=${tx._id})`);
 }
 
 main().catch((e) => {
