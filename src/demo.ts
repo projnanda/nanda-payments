@@ -73,9 +73,19 @@ type Invoice = {
   _id: string; 
   invoiceNumber: string;
   status: 'draft' | 'issued' | 'paid' | 'cancelled';
-  amount: { value: number; scale: number };
+  amount: { value: number; currency: string; scale: number };
   issuer: { did: string; walletId: string };
-  payer?: { did: string; walletId: string };
+  recipient: { did: string; walletId?: string };
+  metadata?: {
+    memo?: string;
+    description?: string;
+    items?: Array<{
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      amount: number;
+    }>;
+  };
 };
 type ReputationRequest = {
   agentDid: string;
@@ -112,7 +122,11 @@ async function ensureAgent(did: string, agentName: string, primaryFactsUrl?: str
 
   // 2) Create/upsert via the resolver endpoint (more permissive)
   try {
-    const created = await jpost(`/agents/resolve`, { did, agentName, primaryFactsUrl });
+    const created = await jpost(`/agents/resolve`, { 
+      did, 
+      agentName, 
+      primaryFactsUrl
+    });
     console.log(`  ${checkmark()} agent created via /agents/resolve: ${did}`);
     return created;
   } catch (e: any) {
@@ -128,16 +142,24 @@ async function createWallet(did: string): Promise<Wallet> {
 }
 
 async function attachWallet(did: string, walletId: string, extras?: Record<string, any>) {
+  // First attach the wallet
   const payload = {
     did,
     payments: {
-      accepts: ["earn", "transfer", "spend"],
-      ttl: 3600,
-      ...(extras || {}),
-    },
+      np: {
+        walletId,
+        accepts: ["earn", "transfer", "spend"],
+        ttl: 3600,
+        eventsWebhook: `http://localhost:3000/events/by-agent/${encodeURIComponent(did)}`,
+        invoiceEndpoint: `http://localhost:3000/invoices/${encodeURIComponent(did)}/notify`,
+        ...(extras?.payments?.np || {})
+      }
+    }
   };
-  const out = await jpost(`/wallets/${walletId}/attach`, payload);
-  console.log(`  ${checkmark()} wallet attached to agent ${did}`);
+
+  // Update agent with wallet and payment settings
+  const out = await jpost(`/agents/resolve`, payload);
+  console.log(`  ${checkmark()} wallet attached and payment config updated for agent ${did}`);
   return out;
 }
 
@@ -168,24 +190,43 @@ async function mintIfNeeded(walletId: string, did: string, need: number) {
 }
 
 async function createInvoice(issuerDid: string, issuerWalletId: string, payerDid: string, amountMinor: number): Promise<Invoice> {
-  const invoice = await jpost<Invoice>('/invoices', {
+  // Create draft invoice
+  const invoice = await jpost<Invoice>("/invoices", {
+    amount: { value: amountMinor },
     issuer: { did: issuerDid, walletId: issuerWalletId },
-    recipient: { did: payerDid }, // Changed from payer to recipient to match API schema
-    amount: { currency: "NP", scale: 3, value: amountMinor },
-    paymentTerms: {
-      acceptPartial: false,
-      allowOverpayment: false
-    },
-    metadata: { demo: true }
+    recipient: { did: payerDid }
   });
-  console.log(`  ${checkmark()} invoice created: ${invoice.invoiceNumber}`);
-  return invoice;
-}
+  console.log(`  ${checkmark()} invoice created: ${invoice._id}`);
 
-async function issueInvoice(invoiceId: string): Promise<Invoice> {
-  const invoice = await jpost<Invoice>(`/invoices/${invoiceId}/issue`, {});
-  console.log(`  ${checkmark()} invoice issued: ${invoice.invoiceNumber}`);
-  return invoice;
+  // Issue the invoice
+  const issuedInvoice = await jpost<Invoice>(`/invoices/${invoice._id}/issue`, {});
+  console.log(`  ${checkmark()} invoice issued: ${issuedInvoice.invoiceNumber}`);
+
+  // Get recipient's invoice endpoint from their agent
+  const recipientAgent = await jget<any>(`/agents/${payerDid}`);
+  const invoiceEndpoint = recipientAgent.payments?.np?.invoiceEndpoint;
+  if (!invoiceEndpoint) {
+    throw new Error(`Recipient ${payerDid} does not have an invoice endpoint configured`);
+  }
+
+  // Notify recipient
+  const notifyRes = await fetch(invoiceEndpoint, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      invoiceId: issuedInvoice._id,
+      issuerDid,
+      recipientDid: payerDid,
+      amount: issuedInvoice.amount
+    })
+  });
+
+  if (!notifyRes.ok) {
+    throw new Error(`Failed to notify recipient: ${notifyRes.statusText}`);
+  }
+  console.log(`  ${checkmark()} invoice notification sent to ${payerDid}`);
+
+  return issuedInvoice;
 }
 
 async function getReputationScore(agentDid: string): Promise<ReputationResponse> {
@@ -275,26 +316,13 @@ async function main() {
   const B_WALLET = (await createWallet(B_DID))._id;
 
   console.log("\n3) Attach wallets to agents");
-  await attachWallet(A_DID, A_WALLET, { 
-    payments: {
-      accepts: ["earn", "transfer", "spend"],
-      ttl: 3600,
-      eventsWebhook: `http://localhost:3000/events/by-agent/${encodeURIComponent(A_DID)}`
-    }
-  });
-  await attachWallet(B_DID, B_WALLET, { 
-    payments: {
-      accepts: ["earn", "transfer", "spend"],
-      ttl: 3600,
-      eventsWebhook: `http://localhost:3000/events/by-agent/${encodeURIComponent(B_DID)}`
-    }
-  });
+  await attachWallet(A_DID, A_WALLET);
+  await attachWallet(B_DID, B_WALLET);
 
   // Phase 2: Invoice & Reputation Verification
   console.log("\nPhase 2: Invoice & Reputation Verification");
   // Create and expose invoice
-  const invoice = await createInvoice(B_DID, B_WALLET, A_DID, AMOUNT);
-  const issuedInvoice = await issueInvoice(invoice._id);
+  const issuedInvoice = await createInvoice(B_DID, B_WALLET, A_DID, AMOUNT);
 
   // Check initial balances
   console.log("\n4) Balances BEFORE payment");

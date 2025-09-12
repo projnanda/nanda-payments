@@ -1,0 +1,59 @@
+{
+  "_id": "inv_a1b2c3",
+  "invoiceNumber": "INV2509-0001",
+  "status": "issued",
+  
+  "amount": {
+    "currency": "NP",
+    "scale": 3,
+    "value": 2500
+  },
+
+  "issuer": {
+    "did": "did:nanda:provider",
+    "walletId": "wal_7f3a0c"
+  },
+  "recipient": {
+    "did": "did:nanda:requester",
+    "walletId": "wal_9d2e1f"
+  },
+
+  "paymentTerms": {
+    "dueDate": "2025-09-15T23:59:59Z",
+    "acceptPartial": false,
+    "minAmount": 2500,
+    "allowOverpayment": false,
+    "maxAmount": 2500
+  },
+
+  "transactions": [
+    {
+      "txId": "tx_8h4j2k",
+      "amount": 2500,
+      "timestamp": "2025-09-12T15:30:00Z"
+    }
+  ],
+
+  "metadata": {
+    "memo": "Payment for service",
+    "description": "Service provided on September 12, 2025",
+    "items": [
+      {
+        "description": "Service fee",
+        "quantity": 1,
+        "unitPrice": 2500,
+        "amount": 2500
+      }
+    ],
+    "tags": ["service", "nanda"],
+    "externalRef": "order-123"
+  },
+
+  "issuedAt": "2025-09-12T15:00:00Z",
+  "paidAt": "2025-09-12T15:30:00Z",
+  "expiresAt": "2025-09-15T23:59:59Z",
+  "cancelledAt": null,
+  
+  "createdAt": "2025-09-12T14:59:40.476Z",
+  "updatedAt": "2025-09-12T15:30:00.000Z"
+}

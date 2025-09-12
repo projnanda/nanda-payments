@@ -501,6 +501,34 @@
 -   Error (422): For payment validation errors
 -   Error (402): For insufficient funds
 
+### Notify Invoice
+
+-   **POST** `/invoices/:did/notify`
+-   **Description**: Notifies a recipient agent about an invoice. Used by providers to push invoice notifications to recipients.
+
+**Request Body:**
+
+```json
+{
+    "invoiceId": "string",
+    "issuerDid": "string",
+    "recipientDid": "string",
+    "amount": {
+        "value": "number",
+        "currency": "string" (optional),
+        "scale": "number" (optional)
+    }
+}
+```
+
+**Response:**
+
+-   Success (200): `{ ok: true, message: string, invoiceId: string }`
+-   Error (400): If recipient DID doesn't match route parameter
+-   Error (404): If invoice not found
+-   Error (422): If invoice is not in issued state
+-   Error (403): If issuer DID doesn't match invoice issuer
+
 ## Reputation Transactions API
 
 ### Create Transaction with Reputation

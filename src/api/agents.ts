@@ -14,7 +14,7 @@ agents.post("/agents/resolve", async (req, res) => {
     label: z.string().optional(),
     payments: z.object({
       np: z.object({
-        walletId: z.string(),
+        walletId: z.string().optional(),
         scale: z.number().optional(),
         receiveEndpoint: z.string().optional(),
         invoiceEndpoint: z.string().optional(),
@@ -23,7 +23,7 @@ agents.post("/agents/resolve", async (req, res) => {
         minAmount: z.number().optional(),
         ttl: z.number().optional(),
         walletProofVerified: z.boolean().optional()
-      })
+      }).optional()
     }).optional(),
     facts: z.any().optional(),
     status: z.enum(["active","suspended","expired"]).optional()

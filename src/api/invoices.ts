@@ -170,6 +170,85 @@ invoices.get("/invoices", async (req, res) => {
   res.json(invoices);
 });
 
+// Notify recipient of new invoice (provider pushes to recipient's endpoint)
+invoices.post("/invoices/:did/notify", async (req, res) => {
+  const schema = z.object({
+    invoiceId: z.string(),
+    issuerDid: z.string(),
+    recipientDid: z.string(),
+    amount: z.object({
+      value: z.number().positive(),
+      currency: z.string().optional(),
+      scale: z.number().optional()
+    })
+  });
+
+  try {
+    const body = schema.parse(req.body);
+    
+    // Verify recipient DID matches route parameter
+    if (body.recipientDid !== req.params.did) {
+      return res.status(400).json({ 
+        error: { 
+          code: "INVALID_RECIPIENT", 
+          message: "Recipient DID must match route parameter" 
+        } 
+      });
+    }
+
+    // Verify invoice exists and is in issued state
+    const invoice = await InvoiceModel.findById(body.invoiceId);
+    if (!invoice) {
+      return res.status(404).json({ 
+        error: { 
+          code: "NOT_FOUND", 
+          message: "Invoice not found" 
+        } 
+      });
+    }
+
+    if (invoice.status !== "issued") {
+      return res.status(422).json({ 
+        error: { 
+          code: "INVALID_STATE", 
+          message: "Only issued invoices can be notified" 
+        } 
+      });
+    }
+
+    // Verify issuer owns the invoice
+    if (!invoice.issuer || invoice.issuer.did !== body.issuerDid) {
+      return res.status(403).json({ 
+        error: { 
+          code: "UNAUTHORIZED", 
+          message: "Only invoice issuer can send notifications" 
+        } 
+      });
+    }
+
+    // Emit event for invoice notification
+    emit({ 
+      type: "invoice.notification", 
+      invoiceId: invoice._id,
+      issuerDid: body.issuerDid,
+      recipientDid: body.recipientDid
+    });
+
+    res.json({ 
+      ok: true, 
+      message: "Invoice notification received",
+      invoiceId: invoice._id 
+    });
+  } catch (e: any) {
+    return res.status(400).json({ 
+      error: { 
+        code: "VALIDATION_ERROR", 
+        message: e?.message ?? "Invalid request" 
+      } 
+    });
+  }
+});
+
 // Pay invoice
 invoices.post("/invoices/:invoiceId/pay", async (req, res) => {
   const schema = z.object({

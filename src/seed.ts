@@ -32,6 +32,7 @@ async function run() {
       np: { 
         walletId: "pending",
         eventsWebhook: "http://localhost:3000/events/by-agent/did:nanda:rahul",
+        invoiceEndpoint: "http://localhost:3000/invoices/did:nanda:rahul",
         walletProofVerified: true 
       } 
     },
@@ -47,6 +48,7 @@ async function run() {
       np: { 
         walletId: "pending",
         eventsWebhook: "http://localhost:3000/events/by-agent/did:nanda:sree",
+        invoiceEndpoint: "http://localhost:3000/invoices/did:nanda:sree",
         walletProofVerified: true 
       } 
     },
