@@ -28,7 +28,13 @@ async function run() {
     agentName: "Rahul Agent",
     label: "Rahul",
     primaryFactsUrl: "https://list39.org/@rahul.json",
-    payments: { np: { walletId: "pending", eventsWebhook: "https://rahul-agent.local/nanda/events", walletProofVerified: true } },
+    payments: { 
+      np: { 
+        walletId: "pending",
+        eventsWebhook: "http://localhost:3000/events/by-agent/did:nanda:rahul",
+        walletProofVerified: true 
+      } 
+    },
     status: "active"
   });
 
@@ -37,7 +43,13 @@ async function run() {
     agentName: "Sree Agent",
     label: "Sree",
     primaryFactsUrl: "https://list39.org/@sree.json",
-    payments: { np: { walletId: "pending", eventsWebhook: "https://sree-agent.local/nanda/events", walletProofVerified: true } },
+    payments: { 
+      np: { 
+        walletId: "pending",
+        eventsWebhook: "http://localhost:3000/events/by-agent/did:nanda:sree",
+        walletProofVerified: true 
+      } 
+    },
     status: "active"
   });
 

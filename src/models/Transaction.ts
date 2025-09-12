@@ -52,7 +52,8 @@ const TransactionsSchema = new Schema({
   links: {
     invoiceId: String,
     settlementId: String,
-    reputationJobId: String
+    reputationJobId: String,
+    reputationHash: String  // Encrypted reputation score signed by agent
   },
 
   metadata: {
