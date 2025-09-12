@@ -1,6 +1,7 @@
 import * as crypto from 'crypto';
 import { AgentReputationSigner } from './services/reputationVerifier.js';
 import WebSocket from "ws";
+import { TransactionReputationService } from './services/transactionReputationService.js';
 
 // --- Config -----------------------------------------------------------------
 const BASE = process.env.BASE_URL || "http://localhost:3000";
@@ -411,6 +412,32 @@ async function main() {
   // Get and verify reputation
   console.log("\n5) Reputation Verification");
   const repScore = await getReputationScore(B_DID, 'transfer', AMOUNT);
+
+  // Decrypt & verify the reputation hash before submitting the transaction
+  if (!VERIFIER_KEYS) {
+    throw new Error('Verifier keys not initialized');
+  }
+
+  // Initialize a local reputation service with the same keys used to encrypt
+  const repService = new TransactionReputationService({
+    publicKey: VERIFIER_KEYS.publicKey,
+    privateKey: VERIFIER_KEYS.privateKey,
+  } as any);
+
+  // Determine the minimum score required for this transaction
+  const requiredScore = repService.getMinimumReputationRequirement('transfer', AMOUNT);
+
+  // Verify (and implicitly decrypt) the reputation hash
+  const verifyRes = await repService.verifyTransactionReputation(
+    { reputationHash: repScore.reputationHash },
+    B_DID,
+    requiredScore
+  );
+
+  if (!verifyRes.isValid) {
+    throw new Error(`Reputation verification failed: ${verifyRes.error ?? 'unknown error'}`);
+  }
+  console.log(`  ${checkmark()} reputation decrypted & verified for ${B_DID}: score=${verifyRes.reputationScore?.score} (required: ${requiredScore})`);
   
   // Phase 3: Transaction Completion
   console.log("\nPhase 3: Transaction Completion");
@@ -425,6 +452,15 @@ async function main() {
 
   // Get transaction reputation details
   const txReputation = await jget<any>(`/transactions/${tx._id}/reputation`);
+
+  // Update reputation after successful transaction completion
+  const updatedRep = await repService.updateReputationAfterTransaction(
+    tx._id,
+    B_DID,
+    true,
+    verifyRes.reputationScore?.score ?? repScore.score
+  );
+  console.log(`  ${checkmark()} reputation updated after transaction ${tx._id}: ${(verifyRes.reputationScore?.score ?? repScore.score)} -> ${updatedRep}`);
 
   console.log("\n7) Balances AFTER payment");
   const aAfter = await getWallet(A_WALLET);
