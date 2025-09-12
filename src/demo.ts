@@ -275,8 +275,20 @@ async function main() {
   const B_WALLET = (await createWallet(B_DID))._id;
 
   console.log("\n3) Attach wallets to agents");
-  await attachWallet(A_DID, A_WALLET, { eventsWebhook: "https://example.com/nanda/events" });
-  await attachWallet(B_DID, B_WALLET, { eventsWebhook: "https://example.com/nanda/events" });
+  await attachWallet(A_DID, A_WALLET, { 
+    payments: {
+      accepts: ["earn", "transfer", "spend"],
+      ttl: 3600,
+      eventsWebhook: `http://localhost:3000/events/by-agent/${encodeURIComponent(A_DID)}`
+    }
+  });
+  await attachWallet(B_DID, B_WALLET, { 
+    payments: {
+      accepts: ["earn", "transfer", "spend"],
+      ttl: 3600,
+      eventsWebhook: `http://localhost:3000/events/by-agent/${encodeURIComponent(B_DID)}`
+    }
+  });
 
   // Phase 2: Invoice & Reputation Verification
   console.log("\nPhase 2: Invoice & Reputation Verification");
