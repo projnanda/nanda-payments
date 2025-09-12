@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { TransactionModel, IdemModel, NP_CURRENCY, NP_SCALE } from "../models/index.js";
-import { createTransactionWithReputation, initializeReputationService, generateTestVerifierKeys } from "../services/enhancedTransactionEngine.js";
+import { createTransactionWithReputation } from "../services/transactionEngine.js";
+import { initializeReputationService, generateTestVerifierKeys } from "../services/reputationManager.js";
 
 export const reputationTransactions = Router();
 
@@ -154,7 +155,7 @@ reputationTransactions.get("/reputation/requirements", async (req, res) => {
     transactionType,
     amount: amountValue,
     minimumReputationScore: minScore,
-    description: `Minimum reputation score of \${minScore} required for \${transactionType} transactions`
+    description: `Minimum reputation score of ${minScore} required for ${transactionType} transactions`
   });
 });
 

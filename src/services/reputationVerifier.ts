@@ -28,28 +28,39 @@ export class ReputationVerifier {
     try {
       // Decode the base64 encrypted hash
       const encryptedBuffer = Buffer.from(encryptedHash, 'base64');
-      // Decrypt using the verifier's private key
-      const decrypted = crypto.privateDecrypt(
+      
+      // Parse the hybrid encrypted data
+      const encryptedData = JSON.parse(encryptedBuffer.toString('utf8'));
+      const { encryptedKey, encryptedData: encryptedPayload, iv } = encryptedData;
+      
+      // Decrypt the AES key using RSA
+      const aesKey = crypto.privateDecrypt(
         {
           key: this.privateKey,
           padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
           oaepHash: 'sha256',
         },
-        encryptedBuffer
+        Buffer.from(encryptedKey, 'base64')
       );
       
+      // Decrypt the actual data using AES
+      const decipher = crypto.createDecipheriv('aes-256-cbc', aesKey, Buffer.from(iv, 'base64'));
+      
+      let decrypted = decipher.update(encryptedPayload, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
+      
       // Parse the decrypted JSON
-      const reputationData: ReputationScore = JSON.parse(decrypted.toString('utf8'));
+      const reputationData: ReputationScore = JSON.parse(decrypted);
       
       // Validate that the agent DID matches
       if (reputationData.agentDid !== agentDid) {
-        console.warn(`Agent DID mismatch: expected \${agentDid}, got \${reputationData.agentDid}`);
+        console.warn(`Agent DID mismatch: expected ${agentDid}, got ${reputationData.agentDid}`);
         return null;
       }
       
       // Validate reputation score is within valid range (0-100)
       if (reputationData.score < 0 || reputationData.score > 100) {
-        console.warn(`Invalid reputation score: \${reputationData.score}`);
+        console.warn(`Invalid reputation score: ${reputationData.score}`);
         return null;
       }
       
@@ -59,7 +70,7 @@ export class ReputationVerifier {
       const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
       
       if (timestamp < hourAgo) {
-        console.warn(`Reputation hash is too old: \${reputationData.timestamp}`);
+        console.warn(`Reputation hash is too old: ${reputationData.timestamp}`);
         return null;
       }
       
@@ -121,24 +132,46 @@ export class ReputationVerifier {
 // Utility functions for agents to encrypt reputation hashes
 export class AgentReputationSigner {
   /**
-   * Encrypt a reputation score with the verifier's public key
+   * Encrypt a reputation score with the verifier's public key using hybrid encryption
    * @param reputationScore - The reputation score to encrypt
    * @param verifierPublicKey - The verifier's public key
    * @returns Base64 encoded encrypted hash
    */
   static encryptReputationScore(reputationScore: ReputationScore, verifierPublicKey: string): string {
-    const dataToEncrypt = JSON.stringify(reputationScore);
-    const buffer = Buffer.from(dataToEncrypt, 'utf8');
-    
-    const encrypted = crypto.publicEncrypt(
-      {
-        key: verifierPublicKey,
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-        oaepHash: 'sha256',
-      },
-      buffer
-    );
-    
-    return encrypted.toString('base64');
+    try {
+      // Generate a random AES key and IV
+      const aesKey = crypto.randomBytes(32); // 256-bit key
+      const iv = crypto.randomBytes(16); // 128-bit IV
+      
+      // Encrypt the data with AES
+      const dataToEncrypt = JSON.stringify(reputationScore);
+      const cipher = crypto.createCipheriv('aes-256-cbc', aesKey, iv);
+      
+      let encryptedData = cipher.update(dataToEncrypt, 'utf8', 'base64');
+      encryptedData += cipher.final('base64');
+      
+      // Encrypt the AES key with RSA
+      const encryptedKey = crypto.publicEncrypt(
+        {
+          key: verifierPublicKey,
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256',
+        },
+        aesKey
+      );
+      
+      // Combine everything
+      const hybridEncrypted = {
+        encryptedKey: encryptedKey.toString('base64'),
+        encryptedData: encryptedData,
+        iv: iv.toString('base64')
+      };
+      
+      return Buffer.from(JSON.stringify(hybridEncrypted)).toString('base64');
+      
+    } catch (error) {
+      console.error('Failed to encrypt reputation score:', error);
+      throw error;
+    }
   }
 }
