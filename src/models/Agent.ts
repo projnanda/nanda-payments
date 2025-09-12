@@ -7,7 +7,7 @@ const PaymentsSchema = new Schema(
     scale: { type: Number, default: NP_SCALE },
     receiveEndpoint: { type: String },
     invoiceEndpoint: { type: String },
-    eventsWebhook: { type: String },
+    eventsWebhook: { type: String },          // Keep it simple as a string URL
     accepts: [{ type: String }],
     minAmount: { type: Number },
     ttl: { type: Number },
