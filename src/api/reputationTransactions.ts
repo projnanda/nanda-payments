@@ -182,3 +182,111 @@ reputationTransactions.get("/transactions/:txId/reputation", async (req, res) =>
     res.status(500).json({ error: { code: "INTERNAL_ERROR", message: "Failed to retrieve transaction reputation info" } });
   }
 });
+
+// Get agent reputation score by DID
+reputationTransactions.get("/agents/:did/reputation", async (req, res) => {
+  try {
+    const { did } = req.params;
+    
+    if (!did) {
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Agent DID is required" } });
+    }
+
+    // Import reputation service dynamically to avoid circular dependencies
+    const { getReputationService, isReputationServiceReady } = await import('../services/reputationManager.js');
+    const reputationService = getReputationService();
+    const serviceReady = isReputationServiceReady();
+
+    if (!reputationService || !serviceReady) {
+      return res.status(503).json({ 
+        error: { 
+          code: "SERVICE_UNAVAILABLE", 
+          message: "Reputation service not initialized. Please call /reputation/initialize first." 
+        } 
+      });
+    }
+
+    // Calculate real reputation score using transaction history
+    const { ReputationCalculator } = await import('../services/reputationCalculator.js');
+    const reputationScore = await ReputationCalculator.getReputationScore(did);
+
+    res.json({
+      success: true,
+      data: reputationScore
+    });
+
+  } catch (e: any) {
+    console.error(`[REPUTATION ERROR] Failed to fetch reputation for ${req.params.did}:`, e.message);
+    res.status(500).json({ 
+      error: { 
+        code: "INTERNAL_ERROR", 
+        message: "Failed to retrieve agent reputation score" 
+      } 
+    });
+  }
+});
+
+// Get agent reputation score with encrypted hash (for verification purposes)
+reputationTransactions.post("/agents/:did/reputation/verify", async (req, res) => {
+  try {
+    const { did } = req.params;
+    const { reputationHash } = req.body;
+    
+    if (!did) {
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Agent DID is required" } });
+    }
+
+    if (!reputationHash) {
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Reputation hash is required" } });
+    }
+
+    // Import reputation service dynamically to avoid circular dependencies
+    const { getReputationService, isReputationServiceReady } = await import('../services/reputationManager.js');
+    const reputationService = getReputationService();
+    const serviceReady = isReputationServiceReady();
+
+    if (!reputationService || !serviceReady) {
+      return res.status(503).json({ 
+        error: { 
+          code: "SERVICE_UNAVAILABLE", 
+          message: "Reputation service not initialized. Please call /reputation/initialize first." 
+        } 
+      });
+    }
+
+    // Verify the reputation hash
+    const verificationResult = await reputationService.verifyTransactionReputation(
+      { reputationHash },
+      did,
+      0 // We don't need a minimum score for verification, just validation
+    );
+
+    if (!verificationResult.isValid) {
+      return res.status(403).json({
+        error: {
+          code: "REPUTATION_VERIFICATION_FAILED",
+          message: verificationResult.error || "Invalid reputation hash"
+        }
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        agentDid: did,
+        reputationScore: verificationResult.reputationScore,
+        isValid: true,
+        verifiedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (e: any) {
+    console.error(`[REPUTATION ERROR] Failed to verify reputation for ${req.params.did}:`, e.message);
+    res.status(500).json({ 
+      error: { 
+        code: "INTERNAL_ERROR", 
+        message: "Failed to verify agent reputation" 
+      } 
+    });
+  }
+});
