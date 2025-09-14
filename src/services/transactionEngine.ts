@@ -142,31 +142,74 @@ export async function createTransactionWithReputation(opts: {
     if (tx) return tx;
   }
 
+  console.log(`[REPUTATION DEBUG] Starting transaction with reputation check:`, {
+    type,
+    actorType: actor?.type,
+    actorDid: actor?.did,
+    skipReputationCheck,
+    hasReputationHash: !!reputationHash
+  });
+
   // Import reputation service dynamically to avoid circular dependencies
-  const { getReputationService } = await import('./reputationManager.js');
+  const { getReputationService, isReputationServiceReady } = await import('./reputationManager.js');
   const reputationService = getReputationService();
+  const serviceReady = isReputationServiceReady();
+
+  console.log(`[REPUTATION DEBUG] Reputation service status:`, {
+    serviceExists: !!reputationService,
+    serviceReady,
+    actorType: actor?.type,
+    actorDid: actor?.did,
+    skipReputationCheck
+  });
 
   // Reputation verification for agent transactions
-  if (reputationService && actor?.type === "agent" && actor.did && !skipReputationCheck) {
-    const minRequiredScore = reputationService.getMinimumReputationRequirement(type, amountValue);
-    
-    const reputationResult = await reputationService.verifyTransactionReputation(
-      { reputationHash },
-      actor.did,
-      minRequiredScore
-    );
-
-    if (!reputationResult.isValid) {
-      const error: any = new Error(`Reputation verification failed: ${reputationResult.error}`);
-      error.httpCode = 403; // Forbidden
+  if (actor?.type === "agent" && actor.did && !skipReputationCheck) {
+    if (!reputationService || !serviceReady) {
+      const error: any = new Error("Reputation service not initialized. Please call /reputation/initialize first.");
+      error.httpCode = 503; // Service Unavailable
       error.reputationError = true;
+      console.error(`[REPUTATION ERROR] Service not initialized for agent transaction:`, actor.did);
       throw error;
     }
 
-    // Log successful reputation verification
-    if (reputationResult.reputationScore) {
-      console.log(`Reputation verified for ${actor.did}: score ${reputationResult.reputationScore.score} (required: ${minRequiredScore})`);
+    try {
+      const minRequiredScore = reputationService.getMinimumReputationRequirement(type, amountValue);
+      console.log(`[REPUTATION DEBUG] Required score for ${type} (${amountValue}): ${minRequiredScore}`);
+      
+      const reputationResult = await reputationService.verifyTransactionReputation(
+        { reputationHash },
+        actor.did,
+        minRequiredScore
+      );
+
+      console.log(`[REPUTATION DEBUG] Verification result:`, {
+        isValid: reputationResult.isValid,
+        error: reputationResult.error,
+        score: reputationResult.reputationScore?.score
+      });
+
+      if (!reputationResult.isValid) {
+        const error: any = new Error(`Reputation verification failed: ${reputationResult.error}`);
+        error.httpCode = 403; // Forbidden
+        error.reputationError = true;
+        throw error;
+      }
+
+      // Log successful reputation verification
+      if (reputationResult.reputationScore) {
+        console.log(`[REPUTATION SUCCESS] Verified for ${actor.did}: score ${reputationResult.reputationScore.score} (required: ${minRequiredScore})`);
+      }
+    } catch (reputationError: any) {
+      console.error(`[REPUTATION ERROR] Verification failed for ${actor.did}:`, reputationError.message);
+      throw reputationError;
     }
+  } else {
+    console.log(`[REPUTATION DEBUG] Skipping reputation check:`, {
+      reason: !actor?.type ? 'no actor type' : 
+              !actor?.did ? 'no actor did' : 
+              skipReputationCheck ? 'explicitly skipped' : 'not an agent transaction'
+    });
   }
 
   // fetch wallets

@@ -14,6 +14,26 @@ async function main() {
   await mongoose.connect(MONGO_URL);
   console.log("[mongo] connected");
 
+  // Initialize reputation service with default keys for development
+  try {
+    const { initializeReputationService, generateTestVerifierKeys } = await import('./services/reputationManager.js');
+    const keys = generateTestVerifierKeys();
+    initializeReputationService(keys.privateKey, keys.publicKey);
+    console.log("[reputation] service initialized with generated keys");
+  } catch (error) {
+    console.warn("[reputation] failed to initialize service:", error.message);
+  }
+
+  // Initialize reputation service with default keys for development
+  try {
+    const { initializeReputationService, generateTestVerifierKeys } = await import('./services/reputationManager.js');
+    const keys = generateTestVerifierKeys();
+    initializeReputationService(keys.privateKey, keys.publicKey);
+    console.log("[reputation] service initialized with generated keys");
+  } catch (error) {
+    console.warn("[reputation] failed to initialize service:", error.message);
+  }
+
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: "1mb" }));

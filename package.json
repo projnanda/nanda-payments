@@ -8,7 +8,8 @@
     "demo": "tsx src/demo.ts",
     "start": "node --enable-source-maps dist/server.js",
     "build": "tsc -p tsconfig.json",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "reputation-demo": "tsx src/reputationDemo.ts"
   },
   "dependencies": {
     "express": "^4.19.2",
