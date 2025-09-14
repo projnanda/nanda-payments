@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>NANDA Points API Tester v2.0 - 1757823500</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .api-section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+
+        .api-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #4facfe;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .wallet-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .wallet-info h3 {
+            color: #2c5aa0;
+            margin-bottom: 10px;
+        }
+
+        .wallet-info p {
+            margin: 5px 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 NANDA Points API Tester</h1>
+            <p>Test and interact with the NANDA Points system</p>
+            <div style="margin-top: 15px;">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Checking API status...</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="grid">
+                <!-- Health Check Section -->
+                <div class="api-section">
+                    <h2>🏥 Health Check</h2>
+                    <button class="btn" onclick="checkHealth()">Check API Health</button>
+                    <div id="healthResult" class="result" style="display: none;"></div>
+                </div>
+
+                <!-- Agent Management Section -->
+                <div class="api-section">
+                    <h2>👤 Agent Management</h2>
+                    <div class="form-group">
+                        <label for="agentDid">Agent DID:</label>
+                        <input type="text" id="agentDid" placeholder="did:nanda:agent123" value="did:nanda:test-agent">
+                    </div>
+                    <div class="form-group">
+                        <label for="agentName">Agent Name:</label>
+                        <input type="text" id="agentName" placeholder="Agent Name" value="Test Agent">
+                    </div>
+                    <div class="form-group">
+                        <label for="agentFactsUrl">Facts URL:</label>
+                        <input type="text" id="agentFactsUrl" placeholder="https://agent.com/facts" value="https://test-agent.com/facts">
+                    </div>
+                    <button class="btn" onclick="createAgent()">Create Agent</button>
+                    <button class="btn" onclick="getAgent()">Get Agent</button>
+                    <div id="agentResult" class="result" style="display: none;"></div>
+                </div>
+
+                <!-- Wallet Management Section -->
+                <div class="api-section">
+                    <h2>💼 Wallet Management</h2>
+                    <div class="form-group">
+                        <label for="walletAgentDid">Agent DID:</label>
+                        <input type="text" id="walletAgentDid" placeholder="did:nanda:agent123" value="did:nanda:test-agent">
+                    </div>
+                    <div class="form-group">
+                        <label for="walletType">Wallet Type:</label>
+                        <select id="walletType">
+                            <option value="user">User</option>
+                            <option value="treasury">Treasury</option>
+                            <option value="fee_pool">Fee Pool</option>
+                            <option value="escrow">Escrow</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="createWallet()">Create Wallet</button>
+                    <button class="btn" onclick="getWalletBalance()">Get Balance</button>
+                    <div id="walletResult" class="result" style="display: none;"></div>
+                    <div id="walletInfo" class="wallet-info" style="display: none;"></div>
+                </div>
+
+                <!-- Transaction Section -->
+                <div class="api-section">
+                    <h2>💰 Transactions</h2>
+                    <div class="form-group">
+                        <label for="transactionWalletId">Wallet ID:</label>
+                        <input type="text" id="transactionWalletId" placeholder="Wallet ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionAmount">Amount (in minor units):</label>
+                        <input type="number" id="transactionAmount" placeholder="1000" value="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="transactionReason">Reason Code:</label>
+                        <input type="text" id="transactionReason" placeholder="TASK_COMPLETION" value="API_TEST">
+                    </div>
+                    <button class="btn btn-success" onclick="earnPoints()">Earn Points</button>
+                    <button class="btn btn-danger" onclick="spendPoints()">Spend Points</button>
+                    <div id="transactionResult" class="result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+        console.log('Frontend loaded - version 2.0');
+        let currentWalletId = null;
+
+        // Check API health on page load
+        window.onload = function() {
+            checkHealth();
+        };
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${result.error?.message || result.message || 'Unknown error'}`);
+                }
+
+                return result;
+            } catch (error) {
+                throw new Error(`API Error: ${error.message}`);
+            }
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${isError ? 'error' : 'success'}`;
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function checkHealth() {
+            try {
+                const result = await apiCall('/health');
+                showResult('healthResult', result);
+                document.getElementById('statusIndicator').className = 'status-indicator status-online';
+                document.getElementById('statusText').textContent = 'API Online';
+            } catch (error) {
+                showResult('healthResult', { error: error.message }, true);
+                document.getElementById('statusIndicator').className = 'status-indicator status-offline';
+                document.getElementById('statusText').textContent = 'API Offline';
+            }
+        }
+
+        async function createAgent() {
+            try {
+                const data = {
+                    did: document.getElementById('agentDid').value,
+                    name: document.getElementById('agentName').value,
+                    primaryFactsUrl: document.getElementById('agentFactsUrl').value
+                };
+                const result = await apiCall('/agents', 'POST', data);
+                showResult('agentResult', result);
+            } catch (error) {
+                showResult('agentResult', { error: error.message }, true);
+            }
+        }
+
+        async function getAgent() {
+            try {
+                const did = document.getElementById('agentDid').value;
+                const result = await apiCall(`/agents/${encodeURIComponent(did)}`);
+                showResult('agentResult', result);
+            } catch (error) {
+                showResult('agentResult', { error: error.message }, true);
+            }
+        }
+
+        async function createWallet() {
+            try {
+                const data = {
+                    did: document.getElementById('walletAgentDid').value,
+                    type: document.getElementById('walletType').value
+                };
+                const result = await apiCall('/wallets', 'POST', data);
+                showResult('walletResult', result);
+                
+                // Store wallet ID for easy access
+                currentWalletId = result._id || result.id;
+                document.getElementById('transactionWalletId').value = currentWalletId;
+                
+                // Show wallet info with current balance
+                await updateWalletInfo();
+            } catch (error) {
+                showResult('walletResult', { error: error.message }, true);
+            }
+        }
+
+        async function updateWalletInfo() {
+            if (!currentWalletId) return;
+            
+            try {
+                const result = await apiCall(`/wallets/${currentWalletId}`);
+                const walletInfo = document.getElementById('walletInfo');
+                walletInfo.style.display = 'block';
+                walletInfo.innerHTML = `
+                    <h3>Wallet Info</h3>
+                    <p><strong>ID:</strong> ${currentWalletId}</p>
+                    <p><strong>Type:</strong> ${result.type}</p>
+                    <p><strong>Balance:</strong> ${(result.balance / 1000).toFixed(3)} NP</p>
+                    <p><strong>Status:</strong> ${result.status}</p>
+                `;
+            } catch (error) {
+                console.error('Failed to update wallet info:', error);
+            }
+        }
+
+        async function getWalletBalance() {
+            try {
+                const walletId = document.getElementById('transactionWalletId').value || currentWalletId;
+                if (!walletId) {
+                    throw new Error('Please provide a wallet ID');
+                }
+                console.log('Calling wallet endpoint for: ' + walletId);
+                const result = await apiCall(`/wallets/${walletId}`);
+                console.log('Wallet response: ' + result);
+                showResult('walletResult', { balance: result.balance, formatted: `${(result.balance / 1000).toFixed(3)} NP`, wallet: result });
+                
+                // Update wallet info display
+                currentWalletId = walletId;
+                await updateWalletInfo();
+            } catch (error) {
+                showResult('walletResult', { error: error.message }, true);
+            }
+        }
+
+        async function earnPoints() {
+            try {
+                const walletId = document.getElementById('transactionWalletId').value || currentWalletId;
+                if (!walletId) {
+                    throw new Error('Please provide a wallet ID');
+                }
+                const data = {
+                    type: 'mint',
+                    destWalletId: walletId,
+                    amount: {
+                        currency: 'NP',
+                        scale: 3,
+                        value: parseInt(document.getElementById('transactionAmount').value)
+                    },
+                    reasonCode: document.getElementById('transactionReason').value,
+                    idempotencyKey: `earn-${Date.now()}-${Math.random()}`
+                };
+                const result = await apiCall('/transactions', 'POST', data);
+                showResult('transactionResult', result);
+                
+                // Update wallet balance display
+                if (currentWalletId) {
+                    setTimeout(updateWalletInfo, 1000);
+                }
+            } catch (error) {
+                showResult('transactionResult', { error: error.message }, true);
+            }
+        }
+
+        async function spendPoints() {
+            try {
+                const walletId = document.getElementById('transactionWalletId').value || currentWalletId;
+                if (!walletId) {
+                    throw new Error('Please provide a wallet ID');
+                }
+                const data = {
+                    type: 'burn',
+                    sourceWalletId: walletId,
+                    amount: {
+                        currency: 'NP',
+                        scale: 3,
+                        value: parseInt(document.getElementById('transactionAmount').value)
+                    },
+                    reasonCode: document.getElementById('transactionReason').value,
+                    idempotencyKey: `spend-${Date.now()}-${Math.random()}`
+                };
+                const result = await apiCall('/transactions', 'POST', data);
+                showResult('transactionResult', result);
+                
+                // Update wallet balance display
+                if (currentWalletId) {
+                    setTimeout(updateWalletInfo, 1000);
+                }
+            } catch (error) {
+                showResult('transactionResult', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>

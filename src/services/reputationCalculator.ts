@@ -2,7 +2,7 @@ import { TransactionModel, AgentModel } from '../models/index.js';
 
 export interface ReputationScore {
   agentDid: string;
-  score: number;
+  reputation_score: number;
   timestamp: string;
   source: string;
   lastUpdated: string;
@@ -91,7 +91,7 @@ export class ReputationCalculator {
 
       return {
         agentDid,
-        score: clampedScore,
+        reputation_score: clampedScore,
         timestamp: new Date().toISOString(),
         source: 'nanda-reputation-system',
         lastUpdated: new Date().toISOString(),
@@ -188,24 +188,24 @@ export class ReputationCalculator {
     return Math.min(100, recentTransactions.length * 20);
   }
 
-  private static determineReputationLevel(score: number): 'poor' | 'fair' | 'good' | 'excellent' {
-    if (score >= this.REPUTATION_LEVELS.excellent.min) return 'excellent';
-    if (score >= this.REPUTATION_LEVELS.good.min) return 'good';
-    if (score >= this.REPUTATION_LEVELS.fair.min) return 'fair';
+  private static determineReputationLevel(reputation_score: number): 'poor' | 'fair' | 'good' | 'excellent' {
+    if (reputation_score >= this.REPUTATION_LEVELS.excellent.min) return 'excellent';
+    if (reputation_score >= this.REPUTATION_LEVELS.good.min) return 'good';
+    if (reputation_score >= this.REPUTATION_LEVELS.fair.min) return 'fair';
     return 'poor';
   }
 
-  private static calculateTransactionRequirements(score: number) {
+  private static calculateTransactionRequirements(reputation_score: number) {
     const requirements = {
-      transfer: { minScore: 50, eligible: score >= 50 },
-      earn: { minScore: 40, eligible: score >= 40 },
-      spend: { minScore: 60, eligible: score >= 60 },
-      mint: { minScore: 80, eligible: score >= 80 },
-      burn: { minScore: 30, eligible: score >= 30 },
-      hold: { minScore: 50, eligible: score >= 50 },
-      capture: { minScore: 65, eligible: score >= 65 },
-      refund: { minScore: 45, eligible: score >= 45 },
-      reversal: { minScore: 90, eligible: score >= 90 }
+      transfer: { minScore: 50, eligible: reputation_score >= 50 },
+      earn: { minScore: 40, eligible: reputation_score >= 40 },
+      spend: { minScore: 60, eligible: reputation_score >= 60 },
+      mint: { minScore: 80, eligible: reputation_score >= 80 },
+      burn: { minScore: 30, eligible: reputation_score >= 30 },
+      hold: { minScore: 50, eligible: reputation_score >= 50 },
+      capture: { minScore: 65, eligible: reputation_score >= 65 },
+      refund: { minScore: 45, eligible: reputation_score >= 45 },
+      reversal: { minScore: 90, eligible: reputation_score >= 90 }
     };
 
     return requirements;

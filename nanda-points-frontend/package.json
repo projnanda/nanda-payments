@@ -1,0 +1,13 @@
+{
+  "name": "nanda-points-frontend",
+  "version": "1.0.0",
+  "description": "Simple frontend for testing NANDA Points API",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080"
+  },
+  "keywords": ["nanda", "points", "api", "frontend", "tester"],
+  "author": "NANDA Team",
+  "license": "MIT"
+}

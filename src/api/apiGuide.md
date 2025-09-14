@@ -635,3 +635,84 @@
 -   Success (200): `{ ok: true, agent: AgentObject }`
 -   Error (404): If agent or wallet not found
 -   Error (422): If link not initiated
+
+### Get Agent Reputation Score
+
+-   **GET** `/agents/:did/reputation`
+-   **Description**: Gets the current reputation score and eligibility information for a specific agent.
+
+**Path Parameters:**
+
+-   `did`: Agent DID (required)
+
+**Response:**
+
+-   Success (200): 
+```json
+{
+  "success": true,
+  "data": {
+    "agentDid": "string",
+    "score": 75,
+    "timestamp": "2024-01-01T00:00:00.000Z",
+    "source": "nanda-reputation-system",
+    "lastUpdated": "2024-01-01T00:00:00.000Z",
+    "transactionCount": 42,
+    "reputationLevel": "good",
+    "requirements": {
+      "transfer": { "minScore": 50, "eligible": true },
+      "earn": { "minScore": 40, "eligible": true },
+      "spend": { "minScore": 60, "eligible": true },
+      "mint": { "minScore": 80, "eligible": false },
+      "burn": { "minScore": 30, "eligible": true },
+      "hold": { "minScore": 50, "eligible": true },
+      "capture": { "minScore": 65, "eligible": true },
+      "refund": { "minScore": 45, "eligible": true },
+      "reversal": { "minScore": 90, "eligible": false }
+    }
+  }
+}
+```
+-   Error (400): If agent DID is not provided
+-   Error (503): If reputation service is not initialized
+
+### Verify Agent Reputation Hash
+
+-   **POST** `/agents/:did/reputation/verify`
+-   **Description**: Verifies an encrypted reputation hash for a specific agent.
+
+**Path Parameters:**
+
+-   `did`: Agent DID (required)
+
+**Request Body:**
+
+```json
+{
+  "reputationHash": "string"
+}
+```
+
+**Response:**
+
+-   Success (200):
+```json
+{
+  "success": true,
+  "data": {
+    "agentDid": "string",
+    "reputationScore": {
+      "agentDid": "string",
+      "score": 75,
+      "timestamp": "2024-01-01T00:00:00.000Z",
+      "source": "string"
+    },
+    "isValid": true,
+    "verifiedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+-   Error (400): If agent DID or reputation hash is not provided
+-   Error (403): If reputation verification fails
+-   Error (503): If reputation service is not initialized
+
