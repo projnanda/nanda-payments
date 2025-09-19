@@ -5,6 +5,7 @@ const PaymentsSchema = new Schema(
   {
     walletId: { type: String },               // <-- no `unique: true` here
     scale: { type: Number, default: NP_SCALE },
+    serviceCharge: { type: Number, default: 10000 }, // 10 NP in milli-points
     receiveEndpoint: { type: String },
     invoiceEndpoint: { type: String },
     eventsWebhook: { type: String },          // Keep it simple as a string URL

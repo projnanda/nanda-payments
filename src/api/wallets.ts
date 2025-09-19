@@ -68,6 +68,7 @@ wallets.post("/wallets/:walletId/attach", async (req, res) => {
       force: z.boolean().optional().default(false),
       payments: z.object({
         scale: z.number().optional(),
+        serviceCharge: z.number().optional(),
         receiveEndpoint: z.string().optional(),
         invoiceEndpoint: z.string().optional(),
         eventsWebhook: z.string().optional(),
@@ -93,6 +94,7 @@ wallets.post("/wallets/:walletId/attach", async (req, res) => {
     const update: Record<string, any> = {
       "payments.np.walletId": wallet._id.toString(),
       "payments.np.scale": p.scale ?? agent.payments?.np?.scale ?? NP_SCALE,
+      "payments.np.serviceCharge": p.serviceCharge ?? agent.payments?.np?.serviceCharge ?? 10000,
       "payments.np.receiveEndpoint": p.receiveEndpoint ?? agent.payments?.np?.receiveEndpoint,
       "payments.np.invoiceEndpoint": p.invoiceEndpoint ?? agent.payments?.np?.invoiceEndpoint,
       "payments.np.eventsWebhook": p.eventsWebhook ?? agent.payments?.np?.eventsWebhook,
@@ -241,6 +243,7 @@ wallets.post("/wallets/link/verify", async (req, res) => {
       "payments.np.scale": (ext?.scale ?? NP_SCALE),
       "payments.np.receiveEndpoint": (ext?.receiveEndpoint ?? agent.payments?.np?.receiveEndpoint),
       "payments.np.invoiceEndpoint": (ext?.invoiceEndpoint ?? agent.payments?.np?.invoiceEndpoint),
+      "payments.np.serviceCharge": (ext?.serviceCharge ?? agent.payments?.np?.serviceCharge ?? 10000),
       "payments.np.eventsWebhook": (ext?.eventsWebhook ?? agent.payments?.np?.eventsWebhook),
       "payments.np.accepts": (ext?.accepts ?? agent.payments?.np?.accepts ?? ["earn","transfer","spend"]),
       "payments.np.minAmount": (ext?.minAmount ?? agent.payments?.np?.minAmount ?? 1),

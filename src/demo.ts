@@ -1,7 +1,5 @@
-import * as crypto from 'crypto';
-import { AgentReputationSigner } from './services/reputationVerifier.js';
+/* eslint-disable no-console */
 import WebSocket from "ws";
-import { TransactionReputationService } from './services/transactionReputationService.js';
 
 // --- Config -----------------------------------------------------------------
 const BASE = process.env.BASE_URL || "http://localhost:3000";
@@ -17,9 +15,6 @@ const AMOUNT = Number(process.env.AMOUNT_MINOR || 2500);
 
 // how long to wait for the tx.posted websocket event (ms)
 const WS_TIMEOUT_MS = Number(process.env.WS_TIMEOUT_MS || 5000);
-
-// Store keys for consistent reputation verification
-let VERIFIER_KEYS: { privateKey: string; publicKey: string } | null = null;
 
 // --- Helpers ----------------------------------------------------------------
 async function jpost<T>(path: string, body: any): Promise<T> {
@@ -72,19 +67,6 @@ async function waitForServer(retries = 20, delay = 250) {
 }
 
 // --- Types (partial) --------------------------------------------------------
-interface ReputationScore {
-  agentDid: string;
-  score: number;
-  timestamp: string;
-  source: string;
-}
-
-type ReputationResponse = {
-  agentDid: string;
-  score: number;
-  validationResult: boolean;
-};
-
 type Wallet = { _id: string; agentDid: string; balance: number; scale: number };
 type Tx = { _id: string; type: string; reasonCode: string; amount: { value: number; scale: number } };
 type Invoice = { 
@@ -117,50 +99,7 @@ type TransactionEvent = {
   };
 };
 
-async function getReputationScore(agentDid: string, transactionType: string, amount: number): Promise<ReputationResponse & { reputationHash: string }> {
-  // First, ensure we have verifier keys
-  if (!VERIFIER_KEYS) {
-    // Generate keys only once
-    const keysRes = await jpost<any>('/reputation/generate-keys', {});
-    VERIFIER_KEYS = keysRes.keys;
-    
-    // Initialize reputation service with the generated keys
-    await jpost('/reputation/initialize', VERIFIER_KEYS);
-  }
-
-  // Get reputation requirements for this transaction
-  const reqRes = await jget<any>(`/reputation/requirements?transactionType=${transactionType}&amount=${amount}`);
-  const minScore = reqRes.minimumReputationScore;
-
-  // Create reputation data
-  const score = Math.max(minScore, 75);
-  const validationResult = score >= minScore;
-
-  const reputationScore: ReputationScore = {
-    agentDid,
-    score,
-    timestamp: new Date().toISOString(),
-    source: 'demo-verifier'
-  };
-
-  if (!VERIFIER_KEYS) {
-    throw new Error('Verifier keys not initialized');
-  }
-
-  // Use AgentReputationSigner to encrypt the score with the verifier's public key
-  const hash = AgentReputationSigner.encryptReputationScore(reputationScore, VERIFIER_KEYS.publicKey);
-
-  console.log(`  ${checkmark()} reputation validated for ${agentDid}: score=${score} (minimum required: ${minScore})`);
-  console.log(`  ${checkmark()} reputation data encrypted using AgentReputationSigner`);
-
-  return {
-    agentDid,
-    score,
-    validationResult,
-    reputationHash: hash
-  };
-}
-
+// --- Demo Flow --------------------------------------------------------------
 async function ensureAgent(did: string, agentName: string, primaryFactsUrl?: string) {
   // 1) Try to fetch existing agent
   try {
@@ -280,47 +219,12 @@ async function createInvoice(issuerDid: string, issuerWalletId: string, payerDid
   return issuedInvoice;
 }
 
-async function initiatePayment(
-  invoice: Invoice, 
-  payerWalletId: string, 
-  repScore: ReputationResponse & { reputationHash: string }
-): Promise<Tx> {
+async function initiatePayment(invoice: Invoice, payerWalletId: string): Promise<Tx> {
   const idem = `demo:invoice-payment:${invoice._id}:${Date.now()}`;
-  
-  // Create transaction with reputation
-  return jpost<Tx>('/transactions/with-reputation', {
-    type: 'transfer',
-    sourceWalletId: payerWalletId,
-    destWalletId: invoice.issuer.walletId,
-    amount: {
-      currency: invoice.amount.currency,
-      scale: invoice.amount.scale,
-      value: invoice.amount.value
-    },
-    reasonCode: 'INVOICE_PAYMENT',
-    idempotencyKey: idem,
-    actor: {
-      type: 'agent',
-      did: invoice.recipient.did,
-      walletId: payerWalletId
-    },
-    facts: {
-      from: { did: invoice.recipient.did },
-      to: { did: invoice.issuer.did }
-    },
-    metadata: {
-      invoiceId: invoice._id,
-      invoiceNumber: invoice.invoiceNumber,
-      reputation: {
-        score: repScore.score,
-        validated: repScore.validationResult,
-        timestamp: new Date().toISOString(),
-        transactionType: 'transfer',
-        amount: invoice.amount.value
-      }
-    },
-    reputationHash: repScore.reputationHash,
-    skipReputationCheck: false
+  return jpost<Tx>(`/invoices/${invoice._id}/pay`, {
+    amount: invoice.amount.value,
+    walletId: payerWalletId,
+    idempotencyKey: idem
   });
 }
 
@@ -392,8 +296,8 @@ async function main() {
   await attachWallet(A_DID, A_WALLET);
   await attachWallet(B_DID, B_WALLET);
 
-  // Phase 2: Invoice & Reputation Verification
-  console.log("\nPhase 2: Invoice & Reputation Verification");
+  // Phase 2: Invoice
+  console.log("\nPhase 2: Invoice");
   // Create and expose invoice
   const issuedInvoice = await createInvoice(B_DID, B_WALLET, A_DID, AMOUNT);
 
@@ -409,58 +313,16 @@ async function main() {
   // Ensure we have enough to pay
   await mintIfNeeded(A_WALLET, A_DID, AMOUNT);
 
-  // Get and verify reputation
-  console.log("\n5) Reputation Verification");
-  const repScore = await getReputationScore(B_DID, 'transfer', AMOUNT);
-
-  // Decrypt & verify the reputation hash before submitting the transaction
-  if (!VERIFIER_KEYS) {
-    throw new Error('Verifier keys not initialized');
-  }
-
-  // Initialize a local reputation service with the same keys used to encrypt
-  const repService = new TransactionReputationService({
-    publicKey: VERIFIER_KEYS.publicKey,
-    privateKey: VERIFIER_KEYS.privateKey,
-  } as any);
-
-  // Determine the minimum score required for this transaction
-  const requiredScore = repService.getMinimumReputationRequirement('transfer', AMOUNT);
-
-  // Verify (and implicitly decrypt) the reputation hash
-  const verifyRes = await repService.verifyTransactionReputation(
-    { reputationHash: repScore.reputationHash },
-    B_DID,
-    requiredScore
-  );
-
-  if (!verifyRes.isValid) {
-    throw new Error(`Reputation verification failed: ${verifyRes.error ?? 'unknown error'}`);
-  }
-  console.log(`  ${checkmark()} reputation decrypted & verified for ${B_DID}: score=${verifyRes.reputationScore?.score} (required: ${requiredScore})`);
-  
   // Phase 3: Transaction Completion
   console.log("\nPhase 3: Transaction Completion");
   console.log("6) Process Payment");
   // Open WebSocket for events
-  const txP = initiatePayment(issuedInvoice, A_WALLET, repScore);
+  const txP = initiatePayment(issuedInvoice, A_WALLET);
   const tx = await txP;
   const wsEventP = listenForTxPosted(tx._id);
 
   // Wait for event and check final balances
   await wsEventP;
-
-  // Get transaction reputation details
-  const txReputation = await jget<any>(`/transactions/${tx._id}/reputation`);
-
-  // Update reputation after successful transaction completion
-  const updatedRep = await repService.updateReputationAfterTransaction(
-    tx._id,
-    B_DID,
-    true,
-    verifyRes.reputationScore?.score ?? repScore.score
-  );
-  console.log(`  ${checkmark()} reputation updated after transaction ${tx._id}: ${(verifyRes.reputationScore?.score ?? repScore.score)} -> ${updatedRep}`);
 
   console.log("\n7) Balances AFTER payment");
   const aAfter = await getWallet(A_WALLET);
@@ -470,7 +332,7 @@ async function main() {
     { wallet: "B (provider)", id: B_WALLET, did: B_DID, balance: fmtNP(bAfter.balance, bAfter.scale) },
   ]);
 
-  // ASCII visualization
+  // ASCII visualization without reputation score
   const deltaA = aBefore.balance - aAfter.balance;
   const deltaB = bAfter.balance - bBefore.balance;
   console.log("\n8) Visualization");
@@ -478,16 +340,11 @@ async function main() {
   console.log(` ${A_DID} (Requester)`);
   console.log(`    ${fmtNP(aBefore.balance)}  --[ ${fmtNP(AMOUNT)} ]-->  ${fmtNP(aAfter.balance)}`);
   console.log("                              |");
-  console.log(`            Reputation Check Results:`);
-  console.log(`            - Score: ${repScore.score}/100`);
-  console.log(`            - Validation: ${repScore.validationResult ? "✓ Passed" : "✗ Failed"}`);
-  console.log(`            - Hash: ${txReputation.reputationHash || "N/A"}`);
-  console.log("                              V");
+  console.log(`                              V`);
   console.log(` ${B_DID} (Provider)`);
   console.log(`    ${fmtNP(bBefore.balance)}  <--[ ${fmtNP(deltaB)} ]--  ${fmtNP(bAfter.balance)}`);
   console.log("────────────────────────────────────────────────────────────");
   console.log(`Invoice: ${issuedInvoice.invoiceNumber} | Status: ${issuedInvoice.status}`);
-  console.log(`Transaction: ${tx._id} | Reputation Verified: ${txReputation.hasReputationHash ? "✓" : "✗"}`);
   console.log("────────────────────────────────────────────────────────────\n");
 
   console.log(`${checkmark()} Payment complete (txId=${tx._id})`);

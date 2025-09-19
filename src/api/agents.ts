@@ -16,6 +16,7 @@ agents.post("/agents/resolve", async (req, res) => {
       np: z.object({
         walletId: z.string().optional(),
         scale: z.number().optional(),
+        serviceCharge: z.number().optional(),
         receiveEndpoint: z.string().optional(),
         invoiceEndpoint: z.string().optional(),
         eventsWebhook: z.string().optional(),
@@ -61,6 +62,7 @@ agents.post("/agents", async (req, res) => {
         np: z.object({
           walletId: z.string().optional(),
           scale: z.number().optional(),
+          serviceCharge: z.number().optional(),
           receiveEndpoint: z.string().optional(),
           invoiceEndpoint: z.string().optional(),
           eventsWebhook: z.string().optional(),
@@ -128,6 +130,7 @@ agents.patch("/agents/:did", async (req, res) => {
         np: z.object({
           walletId: z.string().optional(),
           scale: z.number().optional(),
+          serviceCharge: z.number().optional(),
           receiveEndpoint: z.string().optional(),
           invoiceEndpoint: z.string().optional(),
           eventsWebhook: z.string().optional(),

@@ -1,9 +1,50 @@
 import { Router } from "express";
 import { z } from "zod";
-import { TransactionModel, IdemModel, NP_CURRENCY, NP_SCALE } from "../models/index.js";
+import { TransactionModel, IdemModel, NP_CURRENCY, NP_SCALE, AgentModel } from "../models/index.js";
 import { createTransaction } from "../services/transactionEngine.js";
 
 export const transactions = Router();
+
+// Helper: apply service charge if needed for a transfer
+async function applyServiceChargeIfNeeded(body: any) {
+  try {
+    // Only for standard transfers with both wallets and a recipient DID
+    if (
+      body?.type !== "transfer" ||
+      !body?.sourceWalletId ||
+      !body?.destWalletId ||
+      !body?.facts?.to?.did
+    ) return;
+
+    const toDid = body.facts.to.did;
+
+    // Check the recipient agent's configured service charge
+    const toAgent = await AgentModel.findOne({ did: toDid });
+    const svc = toAgent?.payments?.np?.serviceCharge;
+
+    if (typeof svc !== "number" || svc <= 0) return;
+
+    // Ensure the service-charge leg is idempotent on retries
+    const idemSvcKey = `${body.idempotencyKey}:svc`;
+    const already = await IdemModel.findOne({ key: idemSvcKey });
+    if (already) return;
+
+    // Post the service charge as a second transfer (same source -> same dest)
+    await createTransaction({
+      type: "transfer",
+      sourceWalletId: body.sourceWalletId,
+      destWalletId: body.destWalletId,
+      amountValue: svc,
+      reasonCode: "SERVICE_CHARGE",
+      actor: body.actor,
+      idempotencyKey: idemSvcKey,
+      facts: body.facts,
+      metadata: { ...(body.metadata || {}), serviceChargeApplied: true, serviceChargeValue: svc }
+    });
+  } catch (e: any) {
+    console.error("[serviceCharge] apply failed:", e?.message || e);
+  }
+}
 
 transactions.post("/transactions", async (req, res) => {
   const schema = z.object({
@@ -24,11 +65,16 @@ transactions.post("/transactions", async (req, res) => {
 
   try {
     const body = schema.parse(req.body);
+
+    // If the main tx already exists, still ensure the service charge exists before returning
     const existing = await IdemModel.findOne({ key: body.idempotencyKey });
     if (existing) {
+      await applyServiceChargeIfNeeded(body);
       const tx = await TransactionModel.findById(existing.txId);
       return res.status(200).json(tx);
     }
+
+    // Create the main transaction
     const tx = await createTransaction({
       type: body.type,
       sourceWalletId: body.sourceWalletId ?? null,
@@ -40,6 +86,10 @@ transactions.post("/transactions", async (req, res) => {
       facts: body.facts,
       metadata: body.metadata
     });
+
+    // Non-blocking: try to apply the service charge
+    await applyServiceChargeIfNeeded(body);
+
     res.status(201).json(tx);
   } catch (e: any) {
     const code = e?.httpCode || 400;

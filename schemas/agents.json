@@ -31,6 +31,7 @@
     "np": {
       "walletId": "wal_7f3a0c",
       "scale": 3,
+      "serviceCharge": 10000,   // 10 NP (in milli-points)
       "receiveEndpoint": "https://pay.nanda.dev/receive",
       "invoiceEndpoint": "https://pay.nanda.dev/invoices",
       "eventsWebhook": "https://chat2.nanda-registry.com:6331/nanda/events",
