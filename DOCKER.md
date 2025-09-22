@@ -23,7 +23,7 @@ The combined server runs both services on separate ports:
 
     ```bash
     # Create .env file with NANDA's database credentials
-    echo "MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/nanda_points?retryWrites=true&w=majority" > .env
+    echo "MONGODB_URI={mongo-url}" > .env
     echo "NP_DB_NAME=nanda_points" >> .env
     ```
 
