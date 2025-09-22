@@ -23,7 +23,7 @@ The combined server runs both services on separate ports:
 
     ```bash
     # Create .env file with NANDA's database credentials
-    echo "MONGODB_URI={mongo-url}" > .env
+    echo "MONGODB_URI=mongo_url" > .env
     echo "NP_DB_NAME=nanda_points" >> .env
     ```
 
@@ -78,7 +78,7 @@ The combined server runs both services on separate ports:
 2. **Run with NANDA's database:**
     ```bash
     docker run -p 3000:3000 \
-      -e MONGODB_URI="mongodb+srv://username:password@cluster.mongodb.net/nanda_points?retryWrites=true&w=majority" \
+      -e MONGODB_URI="mongo_url" \
       -e NP_DB_NAME="nanda_points" \
       nanda-points-mcp
     ```
@@ -138,7 +138,7 @@ docker-compose logs -f mongodb
 NODE_ENV=production
 PORT=3000
 HOST=0.0.0.0
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/nanda_points?retryWrites=true&w=majority
+MONGODB_URI=mongo_url
 NP_DB_NAME=nanda_points
 ```
 
