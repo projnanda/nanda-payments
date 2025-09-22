@@ -1,0 +1,12 @@
+{
+    "_id": {
+      "$oid": "68cb488f942c9a336988b052"
+    },
+    "txId": "c9cc0632-d61a-4e72-86db-266541fcd16b",
+    "issuedAt": "2025-09-17T23:47:27.006Z",
+    "fromAgent": "payer_agent",
+    "toAgent": "classify-agent",
+    "amountMinor": 10,
+    "fromBalanceAfter": 990,
+    "toBalanceAfter": 1010
+  }

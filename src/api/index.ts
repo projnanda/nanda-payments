@@ -1,18 +1,18 @@
-import { Express } from "express";
-import { health } from "./health.js";
-import { agents } from "./agents.js";
-import { wallets } from "./wallets.js";
-import { transactions } from "./transactions.js";
-import { reputationTransactions } from "./reputationTransactions.js";
-import { invoices } from "./invoices.js";
-import { events } from "./events.js";
+import { Router } from 'express';
+import walletApi from './walletApi.js';
+import transactionApi from './transactionApi.js';
+import receiptApi from './receiptApi.js';
 
-export function mountApi(app: Express) {
-  app.use(health);
-  app.use(agents);
-  app.use(wallets);
-  app.use(transactions);
-  app.use(reputationTransactions);  // Add reputation endpoints
-  app.use(invoices);  // Add invoice endpoints
-  app.use(events);    // Add events endpoints
-}
+const router = Router();
+
+// Mount API routes
+router.use('/wallets', walletApi);
+router.use('/transactions', transactionApi);
+router.use('/receipts', receiptApi);
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Nanda Points API is running' });
+});
+
+export default router;

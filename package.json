@@ -1,31 +1,33 @@
 {
-  "name": "nanda-points-service",
-  "version": "0.1.0",
+  "name": "nanda-points-mcp-server",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "demo": "tsx src/demo.ts",
-    "start": "node --enable-source-maps dist/server.js",
+    "dev": "tsx src/mcp/server.ts",
     "build": "tsc -p tsconfig.json",
-    "seed": "tsx src/seed.ts"
+    "start": "node dist/combined-server.js",
+    "seed": "tsx seed.js",
+    "mcp:server": "tsx src/mcp/server.ts",
+    "test:x402": "tsx tests/x402-np.test.ts",
+    "test:x402-simple": "tsx tests/x402-simple.test.ts",
+    "test:x402-full": "tsx run-comprehensive-test.ts",
+    "api:server": "tsx src/api/server.ts",
+    "combined:server": "tsx src/combined-server.ts"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "mongoose": "^8.5.1",
-    "ws": "^8.18.0",
-    "zod": "^3.23.8",
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "mongodb": "^6.8.0",
     "dotenv": "^16.4.5",
-    "morgan": "^1.10.0",
+    "zod": "^3.23.8",
+    "express": "^4.19.2",
     "cors": "^2.8.5"
   },
   "devDependencies": {
-    "tsx": "^4.17.0",
-    "typescript": "^5.5.4",
+    "@types/node": "^24.5.1",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.14.12",
-    "@types/ws": "^8.5.10",
-    "@types/morgan": "^1.9.9",
-    "@types/cors": "^2.8.17"
+    "@types/cors": "^2.8.17",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.4"
   }
 }

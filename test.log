@@ -1,0 +1,225 @@
+[2025-09-21T13:41:08.234Z] 🚀 Starting Updated x402-NP Test Suite
+[2025-09-21T13:41:08.234Z] Server URL: http://localhost:3000/mcp
+[2025-09-21T13:41:08.235Z] 
+[2025-09-21T13:41:08.247Z] 🔌 Connecting to MCP server...
+[2025-09-21T13:41:08.285Z] ✅ Connected successfully!
+[2025-09-21T13:41:08.286Z] 
+[2025-09-21T13:41:08.286Z] ============================================================
+[2025-09-21T13:41:08.287Z] TEST: List all available tools
+[2025-09-21T13:41:08.287Z] ============================================================
+[2025-09-21T13:41:08.287Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.287Z] Tool: listTools
+[2025-09-21T13:41:08.287Z] Arguments: {}
+[2025-09-21T13:41:08.291Z] 📥 TOOLS LIST:
+[2025-09-21T13:41:08.291Z]   1. getBalance - Returns NP balance for an agent. Returns error if agent does not exist. This tool is free to use.
+[2025-09-21T13:41:08.291Z]   2. initiateTransaction - Transfer NP from one agent to another and record ledger + receipt. Returns error if either agent does not exist. This tool is free to use.
+[2025-09-21T13:41:08.291Z]   4. getTimestamp - Returns current server timestamp. Requires payment: 1 NP to system.
+[2025-09-21T13:41:08.291Z]   5. setServiceCharge - Set per-call service charge (points) on agent facts. Returns error if agent does not exist.
+[2025-09-21T13:41:08.291Z]   3. getReceipt - Return receipt for a transaction id. This tool is free to use.
+[2025-09-21T13:41:08.291Z] 
+[2025-09-21T13:41:08.291Z]   6. getPaymentInfo - Get x402-NP payment requirements for all paid tools. This tool is free to use.
+[2025-09-21T13:41:08.291Z] ============================================================
+[2025-09-21T13:41:08.291Z] TEST: Get payment information (free tool)
+[2025-09-21T13:41:08.291Z] ============================================================
+[2025-09-21T13:41:08.292Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.292Z] Tool: getPaymentInfo
+[2025-09-21T13:41:08.292Z] Arguments: {}
+[2025-09-21T13:41:08.294Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.294Z] Response: {
+  "protocol": "x402-np",
+  "currency": "NP",
+  "scale": 0,
+  "tools": {
+    "getTimestamp": {
+      "priceNP": 1,
+      "recipient": "system",
+      "description": "Get current server timestamp"
+    }
+  },
+  "instructions": {
+    "steps": [
+      "To use a paid tool, first call it normally to get a 402 Payment Required response",
+      "Use the initiateTransaction tool to pay the required amount to the specified recipient",
+      "Include the transaction ID in the X-PAYMENT-TX-ID header",
+      "Include your agent name in the X-PAYMENT-AGENT header",
+      "Include the payment amount in the X-PAYMENT-AMOUNT header",
+      "Retry the original tool call with these headers"
+    ]
+  }
+}
+[2025-09-21T13:41:08.294Z] Status: SUCCESS - Free tool worked
+[2025-09-21T13:41:08.294Z] 
+[2025-09-21T13:41:08.294Z] ============================================================
+[2025-09-21T13:41:08.294Z] TEST: Call getBalance (now free)
+[2025-09-21T13:41:08.294Z] ============================================================
+[2025-09-21T13:41:08.294Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.294Z] Tool: getBalance
+[2025-09-21T13:41:08.294Z] Arguments: {
+  "agent_name": "claude-desktop"
+}
+[2025-09-21T13:41:08.300Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.301Z] Response: {
+  "agent_name": "claude-desktop",
+  "currency": "NP",
+  "scale": 0,
+  "balanceMinor": 1746,
+  "balancePoints": 1746
+}
+[2025-09-21T13:41:08.301Z] ✅ SUCCESS: Free tool worked correctly
+[2025-09-21T13:41:08.301Z]    Got balance: 1746 NP for claude-desktop
+[2025-09-21T13:41:08.301Z] 
+[2025-09-21T13:41:08.301Z] ============================================================
+[2025-09-21T13:41:08.301Z] TEST: Call getReceipt (now free)
+[2025-09-21T13:41:08.301Z] ============================================================
+[2025-09-21T13:41:08.301Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.301Z] Tool: getReceipt
+[2025-09-21T13:41:08.301Z] Arguments: {
+  "txId": "test-receipt-id"
+}
+[2025-09-21T13:41:08.303Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.303Z] Response: {
+  "error": "NOT_FOUND"
+}
+[2025-09-21T13:41:08.304Z] ✅ SUCCESS: Free tool worked correctly (receipt not found as expected)
+[2025-09-21T13:41:08.304Z] 
+[2025-09-21T13:41:08.304Z] ============================================================
+[2025-09-21T13:41:08.304Z] TEST: Call getTimestamp without payment (should require payment)
+[2025-09-21T13:41:08.304Z] ============================================================
+[2025-09-21T13:41:08.304Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.304Z] Tool: getTimestamp
+[2025-09-21T13:41:08.304Z] Arguments: {}
+[2025-09-21T13:41:08.305Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.306Z] Response: {
+  "error": "PAYMENT_REQUIRED",
+  "protocol": "x402-np",
+  "tool": "getTimestamp",
+  "price": {
+    "amount": 1,
+    "currency": "NP",
+    "scale": 0,
+    "recipient": "system"
+  },
+  "description": "Get current server timestamp",
+  "instructions": {
+    "steps": [
+      "Use initiateTransaction tool to transfer 1 NP from your agent to system",
+      "Include the payment details when calling this tool:",
+      "- Add \"_paymentAgent\": \"your-agent-name\" to arguments",
+      "- Add \"_paymentTxId\": \"transaction-id\" to arguments",
+      "- Add \"_paymentAmount\": \"amount-paid\" to arguments",
+      "Retry the tool call with payment arguments"
+    ]
+  }
+}
+[2025-09-21T13:41:08.306Z] ✅ EXPECTED: Payment required correctly detected
+[2025-09-21T13:41:08.306Z] 
+[2025-09-21T13:41:08.306Z] ============================================================
+[2025-09-21T13:41:08.306Z] TEST: Make payment for getTimestamp access
+[2025-09-21T13:41:08.306Z] ============================================================
+[2025-09-21T13:41:08.306Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.306Z] Tool: initiateTransaction
+[2025-09-21T13:41:08.306Z] Arguments: {
+  "from": "claude-desktop",
+  "to": "system",
+  "amount": 1
+}
+[2025-09-21T13:41:08.315Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.315Z] Response: {
+  "txId": "034ccc63-4319-4c23-9d18-ffea3d7ad6d2",
+  "status": "completed",
+  "amountPoints": 1,
+  "currency": "NP",
+  "scale": 0,
+  "from": "claude-desktop",
+  "to": "system",
+  "createdAt": "2025-09-21T13:41:08.310Z",
+  "receipt": {
+    "txId": "034ccc63-4319-4c23-9d18-ffea3d7ad6d2",
+    "issuedAt": "2025-09-21T13:41:08.313Z",
+    "fromAgent": "claude-desktop",
+    "toAgent": "system",
+    "amountMinor": 1,
+    "fromBalanceAfter": 1745,
+    "toBalanceAfter": 1005,
+    "_id": "68d000743b4cf18018400099"
+  },
+  "payload": {
+    "txId": "034ccc63-4319-4c23-9d18-ffea3d7ad6d2",
+    "issuedAt": "2025-09-21T13:41:08.313Z",
+    "fromAgent": "claude-desktop",
+    "toAgent": "system",
+    "amountMinor": 1,
+    "fromBalanceAfter": 1745,
+    "toBalanceAfter": 1005,
+    "_id": "68d000743b4cf18018400099"
+  }
+}
+[2025-09-21T13:41:08.316Z] ✅ Payment successful! TxId: 034ccc63-4319-4c23-9d18-ffea3d7ad6d2
+[2025-09-21T13:41:08.316Z] 
+[2025-09-21T13:41:08.316Z] ============================================================
+[2025-09-21T13:41:08.316Z] TEST: Access getTimestamp with payment proof
+[2025-09-21T13:41:08.316Z] ============================================================
+[2025-09-21T13:41:08.316Z] 📤 MCP REQUEST:
+[2025-09-21T13:41:08.316Z] Tool: getTimestamp
+[2025-09-21T13:41:08.316Z] Arguments: {
+  "_paymentAgent": "claude-desktop",
+  "_paymentTxId": "034ccc63-4319-4c23-9d18-ffea3d7ad6d2",
+  "_paymentAmount": "1"
+}
+[2025-09-21T13:41:08.320Z] 📥 MCP RESPONSE:
+[2025-09-21T13:41:08.320Z] Response: {
+  "timestamp": "2025-09-21T13:41:08.319Z",
+  "unixTimestamp": 1758462068,
+  "serverTime": "2025-09-21T13:41:08.319Z",
+  "timezone": "UTC"
+}
+[2025-09-21T13:41:08.321Z] 🎉 SUCCESS! x402-NP payment flow completed for getTimestamp
+[2025-09-21T13:41:08.321Z]    Server timestamp: 2025-09-21T13:41:08.319Z
+[2025-09-21T13:41:08.321Z] 
+[2025-09-21T13:41:08.321Z] 📊 TEST SUMMARY
+[2025-09-21T13:41:08.321Z] ================
+[2025-09-21T13:41:08.321Z] ✅ MCP connection successful
+[2025-09-21T13:41:08.321Z] ✅ Tool listing successful
+[2025-09-21T13:41:08.321Z] ✅ Free tools (getBalance, getReceipt) working correctly
+[2025-09-21T13:41:08.321Z] ✅ Paid tool (getTimestamp) requiring payment correctly
+[2025-09-21T13:41:08.321Z] ✅ Payment flow working end-to-end
+[2025-09-21T13:41:08.321Z] 
+[2025-09-21T13:41:08.326Z] ✅ Disconnected from server
+[2025-09-21T13:41:08.328Z] 
+[2025-09-21T13:41:08.328Z] 🌐 Testing Direct HTTP Calls
+[2025-09-21T13:41:08.328Z] ==============================
+[2025-09-21T13:41:08.329Z] 
+[2025-09-21T13:41:08.329Z] 📤 HTTP REQUEST: GET /health
+[2025-09-21T13:41:08.330Z] 📥 HTTP RESPONSE: 200 OK
+[2025-09-21T13:41:08.331Z] Response: {
+  "status": "healthy",
+  "server": "nanda-points-mcp",
+  "version": "0.2.0"
+}
+[2025-09-21T13:41:08.331Z] 
+[2025-09-21T13:41:08.331Z] 📤 HTTP REQUEST: POST /mcp
+[2025-09-21T13:41:08.331Z] Headers: Content-Type: application/json, Accept: application/json
+[2025-09-21T13:41:08.331Z] Body: {
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "getBalance",
+    "arguments": {
+      "agent_name": "claude-desktop"
+    }
+  },
+  "id": 1
+}
+[2025-09-21T13:41:08.333Z] 📥 HTTP RESPONSE: 400 Bad Request
+[2025-09-21T13:41:08.333Z] Headers: {
+  "connection": "keep-alive",
+  "content-length": "105",
+  "content-type": "application/json; charset=utf-8",
+  "date": "Sun, 21 Sep 2025 13:41:08 GMT",
+  "etag": "W/\"69-znejF09uoTmzDVlRSJjg9S2smAo\"",
+  "keep-alive": "timeout=5",
+  "x-powered-by": "Express"
+}
+[2025-09-21T13:41:08.333Z] Error response: {"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: No valid session ID provided"},"id":null}
+[2025-09-21T13:41:08.333Z] 
+[2025-09-21T13:41:08.333Z] 📋 Complete test log saved to: test.log
