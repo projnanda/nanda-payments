@@ -1,53 +1,82 @@
 {
-  "_id": "agt_8f21c9",
-  "did": "did:nanda:zuername",
-  "agentName": "zuername agent",
-  "label": "zuername agent",
-  "primaryFactsUrl": "https://list39.org/@zuername.json",
-
-  "facts": {
-    "factsDigest": "sha256:9f…",
-    "factsFetchedAt": "2025-09-02T17:05:00Z",
-    "factsTtlSec": 3600,
-    "provider": {
-      "name": "NANDA",
-      "url": "https://projectnanda.org",
-      "did": "did:nanda:registry"
+    "_id": {
+      "$oid": "68cb46c84ae9e05eed65eb6d"
     },
-    "endpoints": {
-      "static": ["https://chat2.nanda-registry.com:6331"],
-      "adaptiveResolver": { "url": "", "policies": [] }
+    "agent_name": "classify-agent",
+    "capabilities": {
+      "modalities": [
+        "text"
+      ],
+      "streaming": false,
+      "batch": false,
+      "authentication": {
+        "methods": [],
+        "requiredScopes": []
+      }
     },
     "certification": {
       "level": "verified",
       "issuer": "NANDA",
-      "issuanceDate": "2025-09-02",
-      "expirationDate": "2025-10-02",
-      "vcStatusUrl": ""
-    }
-  },
-
-  "payments": {
-    "np": {
-      "walletId": "wal_7f3a0c",
-      "scale": 3,
-      "receiveEndpoint": "https://pay.nanda.dev/receive",
-      "invoiceEndpoint": "https://pay.nanda.dev/invoices",
-      "eventsWebhook": "https://chat2.nanda-registry.com:6331/nanda/events",
-      "accepts": ["earn","transfer"],
-      "minAmount": 1,
-      "ttl": 3600,
-      "walletProofVerified": true
-    }
-  },
-
-  "status": "active",                      // active | suspended | expired
-  "issuancePolicy": {
-    "welcomeGrant": { "enabled": true, "amount": 100000 },
-    "faucet": { "enabled": false, "cooldownSec": 86400, "lifetimeCap": 300000 },
-    "taskOnly": false
-  },
-
-  "createdAt": "2025-09-02T10:59:40.476Z",
-  "updatedAt": "2025-09-02T17:05:00.000Z"
-}
+      "issuanceDate": "2025-09-17",
+      "expirationDate": "2025-10-17"
+    },
+    "created_at": "2025-09-17T23:39:52.080Z",
+    "description": "Classification Agent",
+    "documentationUrl": "",
+    "email": "classify@example.com",
+    "endpoints": {
+      "static": [
+        "https://agents.example.com/classify"
+      ],
+      "adaptive_resolver": {
+        "url": "",
+        "policies": []
+      }
+    },
+    "evaluations": {
+      "performanceScore": 0,
+      "availability90d": "",
+      "lastAudited": "",
+      "auditTrail": "",
+      "auditorID": ""
+    },
+    "id": "ff93a701-e415-490b-8a29-8b312ba9a098",
+    "jurisdiction": "USA",
+    "label": "classify",
+    "provider": {
+      "name": "NANDA",
+      "url": "https://projectnanda.org",
+      "did": ""
+    },
+    "serviceCharge": 10,
+    "skills": [
+      {
+        "id": "chat",
+        "description": "personal AI agent and chatbot",
+        "inputModes": [
+          "text"
+        ],
+        "outputModes": [
+          "text"
+        ],
+        "supportedLanguages": [
+          "en"
+        ]
+      }
+    ],
+    "telemetry": {
+      "enabled": false,
+      "retention": "7d",
+      "sampling": 0.1,
+      "metrics": {
+        "latency_p95_ms": 0,
+        "throughput_rps": 0,
+        "error_rate": 0,
+        "availability": ""
+      }
+    },
+    "updated_at": "2025-09-17T23:39:52.080Z",
+    "username": "classify-agent",
+    "version": "1.0",
+    "walletId": "0d7689d2-b6da-4ddb-a446-09f6681ac7e4"
+  }

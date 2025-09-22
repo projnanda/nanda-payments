@@ -1,8 +1,8 @@
-node_modules/
+node_modules
 .env
-*.log
+dist
 .DS_Store
-*.sqlite
-*.db
-.env
-package-lock.json
+
+# Cursor IDE configuration (contains personal/temporary URLs)
+.cursor/
+.vscode/

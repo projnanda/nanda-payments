@@ -1,28 +1,12 @@
-import mongoose, { Schema, InferSchemaType } from "mongoose";
-import { NP_CURRENCY, NP_SCALE } from "./constants.js";
+import { ObjectId } from 'mongodb';
+import { MinorUnits } from './points';
 
-const WalletsSchema = new Schema({
-  agentDid: { type: String, required: true, index: true },
-  type: { type: String, enum: ["user","treasury","fee_pool","escrow"], default: "user" },
-  currency: { type: String, default: NP_CURRENCY },
-  scale: { type: Number, default: NP_SCALE },
-  balance: { type: Number, default: 0 },
-  seq: { type: Number, default: 0 },
-  limits: {
-    dailySpend: { type: Number, default: 5_000_000 },
-    maxSingleTx: { type: Number, default: 1_000_000 },
-    allowOverdraft: { type: Boolean, default: false }
-  },
-  counters: {
-    earnedToday: { type: Number, default: 0 },
-    spentToday: { type: Number, default: 0 },
-    windowStart: { type: Date, default: () => new Date(new Date().toDateString()) }
-  },
-  status: { type: String, enum: ["active","suspended","closed"], default: "active" },
-  labels: [{ type: String }]
-}, { timestamps: true });
-
-WalletsSchema.index({ agentDid: 1, currency: 1 });
-
-export type WalletDoc = InferSchemaType<typeof WalletsSchema>;
-export const WalletModel = mongoose.model<WalletDoc>("wallets", WalletsSchema);
+// Wallet (linked by agent_name; NOT embedded on agent facts)
+export interface Wallet {
+  _id?: ObjectId | string;
+  walletId: string; // unique wallet identifier
+  agent_name: string; // FK to AgentFacts.agent_name
+  balanceMinor: MinorUnits; // >= 0, always in NP minor units
+  createdAt: string;
+  updatedAt: string;
+}

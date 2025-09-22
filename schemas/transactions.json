@@ -1,55 +1,15 @@
 {
-  "_id": "tx_7b9fd2",
-  "type": "transfer",                     // mint | burn | transfer | earn | spend | hold | capture | refund | reversal
-  "status": "posted",                     // pending | posted | failed | reversed
-  "amount": { "currency": "NP", "scale": 3, "value": 2500 },  // 2.500 NP (stored as milli-points)
-  "reasonCode": "TASK_PAYOUT",
-  "idempotencyKey": "idem_ab12cd34",
-
-  "actor": { "type": "agent", "did": "did:nanda:rahul", "walletId": "wal_src" },
-
-  "facts": {
-    "ttlSec": 3600,
-    "from": {
-      "did": "did:nanda:rahul",
-      "primaryFactsUrl": "https://list39.org/@rahul.json",
-      "vcStatusUrl": "https://vc.nanda.org/rahul",
-      "factsDigest": "sha256:7a…",
-      "eventsWebhook": "https://rahul-agent.xyz/nanda/events",
-      "endpointClass": "static"          // static | adaptive | rotating (captured at tx time)
+    "_id": {
+      "$oid": "68cb488e942c9a336988b051"
     },
-    "to": {
-      "did": "did:nanda:zuername",
-      "primaryFactsUrl": "https://list39.org/@zuername.json",
-      "vcStatusUrl": "https://vc.nanda.org/zuername",
-      "factsDigest": "sha256:9f…",
-      "eventsWebhook": "https://chat2.nanda-registry.com:6331/nanda/events",
-      "endpointClass": "static"
-    }
-  },
-
-  "postings": [
-    { "accountType": "wallet", "accountId": "wal_src", "direction": "debit",  "value": 2500 },
-    { "accountType": "wallet", "accountId": "wal_dst", "direction": "credit", "value": 2500 }
-  ],
-
-  "snapshots": [
-    { "walletId": "wal_src", "balanceAfter": 997500, "seq": 43 },
-    { "walletId": "wal_dst", "balanceAfter": 502500, "seq": 21 }
-  ],
-
-  "links": {
-    "invoiceId": "inv_8k31",
-    "settlementId": "set_2d91",
-    "reputationJobId": "rep_5ac0"       // written by Sree’s consumer later
-  },
-
-  "metadata": {
-    "memo": "Payment for RAG task #481",
-    "tags": ["rag","microtask"],
-    "client": { "sdk": "@nandapayments/sdk", "version": "0.2.1" }
-  },
-
-  "createdAt": "2025-09-02T17:05:00Z",
-  "postedAt":  "2025-09-02T17:05:02Z"
-}
+    "txId": "c9cc0632-d61a-4e72-86db-266541fcd16b",
+    "fromAgent": "payer_agent",
+    "toAgent": "classify-agent",
+    "amountMinor": 10,
+    "currency": "NP",
+    "scale": 0,
+    "createdAt": "2025-09-17T23:47:26.981Z",
+    "status": "completed",
+    "error": null,
+    "task": "image_classification_task"
+  }
