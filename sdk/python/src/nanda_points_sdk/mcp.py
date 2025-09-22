@@ -40,4 +40,35 @@ class McpClient:
                 return text
         return data.get("result", data)
 
+    def call_paid_tool_with_auto_pay(self, paying_agent: str, tool_name: str, args: Optional[Dict[str, Any]] = None, *, session_id: Optional[str] = None, headers: Optional[Dict[str, str]] = None) -> Any:
+        first = self.call_tool(tool_name, args or {}, session_id=session_id, headers=headers)
+        info = first if isinstance(first, dict) else _safe_json(first)
+        if not isinstance(info, dict) or info.get("error") != "PAYMENT_REQUIRED" or "price" not in info:
+            return first
+
+        amount_points = info["price"]["amount"]
+        recipient = info["price"]["recipient"]
+
+        tx = self.call_tool("initiateTransaction", {
+            "from": paying_agent,
+            "to": recipient,
+            "amount": amount_points,
+            "task": f"payment for {tool_name}"
+        }, session_id=session_id, headers=headers)
+
+        tx_id = tx.get("txId") if isinstance(tx, dict) else None
+        if not tx_id:
+            raise RuntimeError(f"Failed to initiate payment for {tool_name}: {tx}")
+
+        paid_args = {**(args or {}), "_paymentAgent": paying_agent, "_paymentTxId": tx_id, "_paymentAmount": str(amount_points)}
+        return self.call_tool(tool_name, paid_args, session_id=session_id, headers=headers)
+
+
+def _safe_json(value: Any) -> Any:
+    try:
+        import json
+        return json.loads(value) if isinstance(value, str) else value
+    except Exception:
+        return value
+
 

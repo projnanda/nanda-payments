@@ -47,6 +47,13 @@ export class NandaPointsRest {
     if (!res.ok) throw new Error(`getReceipt failed: ${res.status}`);
     return res.json();
   }
+
+  // Helper for clients who want to pay via REST and then use MCP
+  async payAndGetTxId(fromAgent: string, toAgent: string, amountPoints: number, task: string): Promise<string> {
+    const tx = await this.initiateTransaction(fromAgent, toAgent, amountPoints, task);
+    if (!tx.txId) throw new Error('No txId returned from initiateTransaction');
+    return tx.txId;
+  }
 }
 
 
