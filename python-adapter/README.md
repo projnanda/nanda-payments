@@ -1,136 +1,241 @@
-# NANDA Adapter with Python Payment Integration
+# NANDA Points Python SDK
 
-A Python implementation that adds NANDA Points payment requirements to the original [NANDA Adapter](https://github.com/projnanda/adapter) `/api/send` route, using a custom Python SDK for NANDA Points payments.
-
-## Overview
-
-This implementation takes the existing Python adapter code as a baseline and integrates NANDA Points payment requirements using a Flask decorator approach. The `/api/send` route now requires 10 NANDA Points per message, while maintaining backward compatibility for free endpoints.
-
-## Key Features
-
-- 🐍 **Pure Python Implementation**: Uses the original Python adapter as baseline
-- 💰 **NANDA Points Integration**: Custom Python SDK for payment handling
-- 🔒 **Flask Decorators**: Clean integration using `@require_payment` decorator
-- 🔄 **Backward Compatible**: Free endpoints remain unchanged
-- ⚡ **x402 Compliant**: Returns proper HTTP 402 responses
-- 🏥 **Health Monitoring**: Payment statistics and monitoring endpoints
-
-## File Structure
-
-```
-python-adapter/
-├── run_ui_agent_https.py                    # Original adapter (reference)
-├── run_ui_agent_https_with_payments.py     # Modified adapter with payments
-├── agent_bridge.py                         # Agent bridge component
-├── nanda_payments_sdk.py                   # Custom Python SDK
-├── requirements.txt                        # Python dependencies
-├── .env.example                            # Environment configuration
-├── test_endpoints.py                       # Test script
-└── README.md                               # This file
-```
+A production-ready Python SDK for integrating NANDA Points payments into web applications and services. Transform any endpoint into a paid service with just a decorator.
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.8+
-- MongoDB running on localhost:27017
-- NANDA Points facilitator running on localhost:3001
-- Valid NANDA Points agent account
-
-### Installation
-
-```bash
-# Navigate to python adapter directory
-cd python-adapter
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Note: python_a2a library may need separate installation
-# pip install python_a2a
-
-# Copy environment configuration
-cp .env.example .env
-# Edit .env with your settings
-```
-
-### Configuration
-
-Edit `.env` file:
-
-```bash
-# Server Configuration
-UI_PORT=5000
-HOST=0.0.0.0
-AGENT_PORT=3000
-
-# NANDA Points Configuration
-FACILITATOR_URL=http://localhost:3001
-AGENT_NAME=nanda-adapter
-
-# Optional: Claude API for enhanced processing
-CLAUDE_API_KEY=your_claude_api_key_here
-```
-
-### Start the Adapter
-
-```bash
-python run_ui_agent_https_with_payments.py
-```
-
-Your adapter will be running at `http://localhost:5000`
-
-## API Endpoints
-
-### Free Endpoints (Unchanged)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check with payment status |
-| `GET` | `/api/agents/list` | List available agents |
-| `GET` | `/api/messages/stream` | Server-Sent Events stream |
-| `GET` | `/api/render` | Get latest message |
-| `GET` | `/api/conversations/:id` | Get conversation history |
-| `GET` | `/api/messages` | Get all messages (paginated) |
-| `GET` | `/api/stats` | Payment and usage statistics |
-| `GET` | `/api/test/payment-info` | Payment configuration info |
-| `POST` | `/api/test/send-free` | Free send test endpoint |
-
-### Paid Endpoints 💰
-
-| Method | Endpoint | Cost | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/send` | 10 NP | Send message to agent bridge |
-| `POST` | `/api/receive_message` | 5 NP | Receive message from agent bridge |
-
-## Python SDK Usage
-
-### Basic Setup
-
 ```python
-from nanda_payments_sdk import quick_setup, PaymentRequirement, require_payment
+from nanda_payments_sdk import quick_setup, PaymentRequirement
+from flask import Flask
 
-# Initialize payments
+app = Flask(__name__)
+
+# One-line setup
 payments = quick_setup(
     facilitator_url="http://localhost:3001",
-    agent_name="my-adapter"
+    agent_name="my-app"
 )
 
-# Create payment requirement
-requirement = PaymentRequirement(
-    amount=10,  # 10 NANDA Points
-    description="Premium API access"
-)
-
-# Use as Flask decorator
+# Transform any route into paid with a decorator
 @app.route('/api/premium', methods=['POST'])
-@require_payment(requirement, payments['config'])
+@payments['require_payment'](PaymentRequirement(amount=10, description="Premium API access"))
 def premium_endpoint():
-    return {"data": "premium content"}
+    return {"result": "premium content"}
+
+if __name__ == '__main__':
+    app.run()
 ```
 
-### Manual Payment Verification
+That's it! Your endpoint now requires 10 NANDA Points per request.
+
+## Features
+
+- **🚀 Zero-Config Setup**: Get started with `quick_setup()` in seconds
+- **🎯 Flask Integration**: Seamless `@require_payment` decorator
+- **📦 Client & Server Tools**: Both request creation and payment verification
+- **🔒 x402 Compliant**: Follows HTTP 402 Payment Required standard
+- **💎 Production Ready**: Type hints, error handling, comprehensive logging
+- **🧪 Easy Testing**: Built-in test utilities and examples
+
+## Installation
+
+```bash
+# Install the SDK
+pip install -r requirements.txt
+
+# Or install individually
+pip install flask requests python_a2a anthropic
+```
+
+## Core Concepts
+
+### 1. Payment Requirements
+Define what payment you need:
+
+```python
+from nanda_payments_sdk import PaymentRequirement
+
+# Simple requirement
+req = PaymentRequirement(amount=10, description="API access")
+
+# Advanced requirement
+req = PaymentRequirement(
+    amount=50,
+    description="Premium weather data",
+    recipient="weather-service",  # Optional: override default recipient
+    timeout=60000  # Optional: payment timeout in ms
+)
+```
+
+### 2. Server-Side Protection
+Protect Flask routes with payments:
+
+```python
+from nanda_payments_sdk import require_payment, create_payment_config
+
+# Manual setup
+config = create_payment_config(
+    facilitator_url="http://localhost:3001",
+    agent_name="my-service"
+)
+
+@app.route('/api/data')
+@require_payment(PaymentRequirement(amount=25), config)
+def get_data():
+    return {"data": "valuable information"}
+```
+
+### 3. Client-Side Payment Creation
+Create payments to send with requests:
+
+```python
+from nanda_payments_sdk import create_and_encode_payment, send_paid_request
+
+# Create payment header
+payment_header = create_and_encode_payment(
+    from_agent="my-client",
+    to_agent="api-server",
+    amount=25,
+    facilitator_url="http://localhost:3001",
+    resource="http://api.example.com/data"
+)
+
+# Use with any HTTP client
+import requests
+response = requests.post(
+    "http://api.example.com/data",
+    headers={"X-PAYMENT": payment_header},
+    json={"query": "weather"}
+)
+
+# Or use built-in client
+response = send_paid_request(
+    url="http://api.example.com/data",
+    from_agent="my-client",
+    to_agent="api-server",
+    amount=25,
+    facilitator_url="http://localhost:3001",
+    data={"query": "weather"}
+)
+```
+
+## Complete Example: Weather API
+
+Here's a complete paid weather service:
+
+```python
+from flask import Flask, request, jsonify
+from nanda_payments_sdk import quick_setup, PaymentRequirement
+
+app = Flask(__name__)
+
+# Setup payments
+payments = quick_setup(
+    facilitator_url="http://localhost:3001",
+    agent_name="weather-api"
+)
+
+# Free tier: basic weather
+@app.route('/weather/basic', methods=['GET'])
+def basic_weather():
+    location = request.args.get('location', 'Unknown')
+    return {"weather": f"Sunny in {location}", "tier": "basic"}
+
+# Premium tier: detailed forecast (costs 10 NP)
+@app.route('/weather/premium', methods=['POST'])
+@payments['require_payment'](PaymentRequirement(
+    amount=10,
+    description="Premium weather forecast"
+))
+def premium_weather():
+    data = request.json
+    location = data.get('location', 'Unknown')
+    return {
+        "weather": f"Detailed forecast for {location}",
+        "temperature": 72,
+        "humidity": 65,
+        "wind_speed": 8,
+        "forecast": ["Sunny", "Partly cloudy", "Rain"],
+        "tier": "premium"
+    }
+
+# Ultra tier: AI-powered analysis (costs 50 NP)
+@app.route('/weather/ai', methods=['POST'])
+@payments['require_payment'](PaymentRequirement(
+    amount=50,
+    description="AI weather analysis"
+))
+def ai_weather():
+    data = request.json
+    location = data.get('location', 'Unknown')
+    return {
+        "weather": f"AI-powered analysis for {location}",
+        "insights": "Perfect day for outdoor activities",
+        "recommendations": ["Bring sunglasses", "Light jacket for evening"],
+        "confidence": 0.95,
+        "tier": "ai"
+    }
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### Testing the Weather API
+
+```python
+# Test script for weather API
+from nanda_payments_sdk import send_paid_request
+
+# Free endpoint - no payment needed
+import requests
+response = requests.get('http://localhost:5000/weather/basic?location=Boston')
+print("Basic:", response.json())
+
+# Premium endpoint - requires 10 NP
+response = send_paid_request(
+    url='http://localhost:5000/weather/premium',
+    from_agent='weather-client',
+    to_agent='weather-api',
+    amount=10,
+    facilitator_url='http://localhost:3001',
+    data={'location': 'Boston'}
+)
+print("Premium:", response.json())
+
+# AI endpoint - requires 50 NP
+response = send_paid_request(
+    url='http://localhost:5000/weather/ai',
+    from_agent='weather-client',
+    to_agent='weather-api',
+    amount=50,
+    facilitator_url='http://localhost:3001',
+    data={'location': 'Boston'}
+)
+print("AI:", response.json())
+```
+
+## Advanced Usage
+
+### Custom Error Handling
+
+```python
+from nanda_payments_sdk import NPPaymentError, NPVerificationError
+
+@app.route('/api/custom')
+@payments['require_payment'](PaymentRequirement(amount=10))
+def custom_endpoint():
+    try:
+        # Your business logic
+        return {"result": "success"}
+    except NPVerificationError as e:
+        # Payment verification failed
+        return {"error": f"Payment failed: {e.code}"}, 402
+    except NPPaymentError as e:
+        # General payment error
+        return {"error": str(e)}, 500
+```
+
+### Manual Payment Processing
 
 ```python
 from nanda_payments_sdk import (
@@ -139,68 +244,164 @@ from nanda_payments_sdk import (
     create_payment_requirements
 )
 
-# Create facilitator client
-facilitator = create_facilitator_client("http://localhost:3001")
+@app.route('/api/manual', methods=['POST'])
+def manual_payment():
+    # Get payment from header
+    x_payment = request.headers.get('X-PAYMENT')
+    if not x_payment:
+        return {"error": "Payment required"}, 402
 
-# Decode payment from header
-payment = decode_payment(request.headers.get('X-PAYMENT'))
+    # Decode payment
+    payment = decode_payment(x_payment)
 
-# Create requirements
-requirements = create_payment_requirements(
-    amount=10,
-    resource=request.url,
-    description="API access",
-    pay_to="my-agent",
-    facilitator_url="http://localhost:3001"
-)
+    # Create requirements
+    requirements = create_payment_requirements(
+        amount=15,
+        resource=request.url,
+        description="Manual processing",
+        pay_to="my-service",
+        facilitator_url="http://localhost:3001"
+    )
 
-# Verify payment
-verification = facilitator.verify(payment, requirements)
-if verification['isValid']:
+    # Verify with facilitator
+    facilitator = create_facilitator_client("http://localhost:3001")
+    verification = facilitator.verify(payment, requirements)
+
+    if not verification['isValid']:
+        return {"error": verification['invalidReason']}, 402
+
     # Process request
-    result = process_request()
+    result = {"message": "Manually processed"}
 
     # Settle payment
-    facilitator.settle(payment, requirements)
+    try:
+        settlement = facilitator.settle(payment, requirements)
+        print(f"Payment settled: {settlement['txId']}")
+    except Exception as e:
+        print(f"Settlement warning: {e}")
+
     return result
 ```
 
-## Testing
+### Environment Configuration
 
-### Run Test Script
+```python
+# .env file
+FACILITATOR_URL=http://localhost:3001
+AGENT_NAME=my-service
+UI_PORT=5000
+DEBUG=True
+
+# Load in your app
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+payments = quick_setup(
+    facilitator_url=os.getenv('FACILITATOR_URL'),
+    agent_name=os.getenv('AGENT_NAME')
+)
+```
+
+## API Reference
+
+### Quick Setup
+
+```python
+def quick_setup(facilitator_url: str, agent_name: str) -> Dict[str, Any]
+```
+One-line setup returning configured payment tools.
+
+**Returns:**
+- `config`: Payment configuration
+- `facilitator`: Facilitator client
+- `require_payment`: Decorator factory
+- `create_payment_requirements`: Requirements builder
+
+### Payment Requirement
+
+```python
+@dataclass
+class PaymentRequirement:
+    amount: int                    # NANDA Points required
+    description: str = "Payment required"  # Payment description
+    recipient: Optional[str] = None         # Override recipient
+    timeout: int = 30000                   # Timeout in milliseconds
+```
+
+### Decorator Usage
+
+```python
+@require_payment(requirement: PaymentRequirement, config: PaymentConfig)
+def protected_function():
+    # Your code here
+    pass
+```
+
+### Client Functions
+
+```python
+# Create payment payload
+payment = create_payment(
+    from_agent="client",
+    to_agent="server",
+    amount=10,
+    facilitator_url="http://localhost:3001"
+)
+
+# Encode for HTTP header
+header = encode_payment(payment)
+
+# One-step creation and encoding
+header = create_and_encode_payment(
+    from_agent="client",
+    to_agent="server",
+    amount=10,
+    facilitator_url="http://localhost:3001"
+)
+
+# Send HTTP request with payment
+response = send_paid_request(
+    url="http://api.example.com/endpoint",
+    from_agent="client",
+    to_agent="server",
+    amount=10,
+    facilitator_url="http://localhost:3001",
+    data={"key": "value"}
+)
+```
+
+### Error Types
+
+```python
+NPPaymentError          # Base payment error
+NPVerificationError     # Payment verification failed
+NPSettlementError       # Payment settlement failed
+NPNetworkError          # Facilitator communication failed
+```
+
+## Testing & Development
+
+### Run the Examples
 
 ```bash
+# Start the example adapter
+python run_ui_agent_https_with_payments.py
+
+# Test payment flow
+python test_paid_flow.py
+
+# Test all endpoints
 python test_endpoints.py
 ```
 
-### Manual Testing
-
-#### Test Free Endpoints
+### Test Without Payment (Expected 402)
 
 ```bash
-# Health check
-curl http://localhost:5000/api/health
-
-# Payment configuration
-curl http://localhost:5000/api/test/payment-info
-
-# Free send test
-curl -X POST http://localhost:5000/api/test/send-free \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Free test message"}'
-```
-
-#### Test Paid Endpoints (Without Payment)
-
-```bash
-# Should return HTTP 402
 curl -i -X POST http://localhost:5000/api/send \
   -H "Content-Type: application/json" \
-  -d '{
-    "message": "Hello, agent!",
-    "conversation_id": "test-conv-1",
-    "client_id": "test-client"
-  }'
+  -d '{"message": "test", "client_id": "test"}'
 ```
 
 **Expected Response:**
@@ -214,171 +415,80 @@ curl -i -X POST http://localhost:5000/api/send \
     "maxAmountRequired": "10",
     "resource": "http://localhost:5000/api/send",
     "description": "Send message to agent bridge",
-    "payTo": "nanda-adapter",
-    "asset": "NP",
-    "extra": {
-      "facilitatorUrl": "http://localhost:3001"
-    }
+    "payTo": "classify-agent",
+    "asset": "NP"
   }]
 }
 ```
 
-#### Test With Payment
+### Test With Payment
+
+```python
+from nanda_payments_sdk import send_paid_request
+
+response = send_paid_request(
+    url="http://localhost:5000/api/send",
+    from_agent="claude-desktop",
+    to_agent="classify-agent",
+    amount=10,
+    facilitator_url="http://localhost:3001",
+    data={
+        "message": "Hello, paid world!",
+        "conversation_id": "test-conv",
+        "client_id": "claude-desktop"
+    }
+)
+
+print(f"Status: {response.status_code}")
+print(f"Response: {response.json()}")
+```
+
+## Prerequisites
+
+1. **Python 3.8+**
+2. **NANDA Points Facilitator** running on port 3001
+3. **MongoDB** for agent wallet storage
+4. **Agent accounts** with sufficient NANDA Points balance
+
+### Setup Facilitator
 
 ```bash
-# With valid NANDA Points payment
-curl -X POST http://localhost:5000/api/send \
-  -H "Content-Type: application/json" \
-  -H "X-PAYMENT: <base64-encoded-payment>" \
-  -d '{
-    "message": "Hello, agent!",
-    "conversation_id": "test-conv-1",
-    "client_id": "test-client"
-  }'
+# In another terminal
+cd ../packages/facilitator
+npm install
+npm run dev
 ```
 
-## Payment Integration Details
-
-### Flask Decorator Approach
-
-The payment integration uses a clean decorator pattern:
-
-```python
-@app.route('/api/send', methods=['POST'])
-@require_payment(SEND_MESSAGE_REQUIREMENT, payments['config'])
-def send_message():
-    # Original function logic here
-    # Payment verification happens automatically
-    return {"response": "processed"}
-```
-
-### Payment Flow
-
-1. **Request without payment** → HTTP 402 with payment requirements
-2. **Request with payment** → Verify with facilitator → Execute function → Settle payment
-3. **Payment failure** → HTTP 402 with error details
-4. **Settlement failure** → Warning logged, request succeeds
-
-### Error Handling
-
-The SDK provides comprehensive error handling:
-
-```python
-from nanda_payments_sdk import NPPaymentError, NPVerificationError, NPSettlementError
-
-try:
-    # Payment processing
-    pass
-except NPVerificationError as e:
-    # Handle verification failure
-    return jsonify({"error": str(e), "code": e.code}), 402
-except NPSettlementError as e:
-    # Handle settlement failure
-    logger.warning(f"Settlement failed: {e}")
-except NPPaymentError as e:
-    # Handle general payment error
-    return jsonify({"error": str(e)}), 500
-```
-
-## Comparison with Original
-
-### What's Added
-
-- **NANDA Points SDK**: Custom Python SDK for payment processing
-- **Payment Decorators**: `@require_payment` for clean integration
-- **x402 Compliance**: Proper HTTP 402 responses with payment requirements
-- **Payment Statistics**: Usage and revenue tracking
-- **Test Endpoints**: Free comparison endpoints for testing
-
-### What's Unchanged
-
-- **Core Functionality**: Agent bridge communication remains the same
-- **Free Endpoints**: All monitoring and utility endpoints remain free
-- **API Format**: Request/response formats unchanged for compatibility
-- **Flask Structure**: Original Flask app structure preserved
-
-### Integration Benefits
-
-- **Non-invasive**: Original code mostly unchanged
-- **Flexible**: Easy to adjust payment amounts and requirements
-- **Testable**: Free endpoints for development and testing
-- **Monitorable**: Payment statistics and health checks
-
-## Python SDK Components
-
-### Core Classes
-
-```python
-@dataclass
-class PaymentRequirement:
-    amount: int
-    description: str = "Payment required"
-    recipient: Optional[str] = None
-    timeout: int = 30000
-
-@dataclass
-class PaymentConfig:
-    facilitator_url: str
-    agent_name: str
-    timeout: int = 30000
-    retry_count: int = 3
-    retry_delay: int = 1000
-```
-
-### Facilitator Client
-
-```python
-class FacilitatorClient:
-    def verify(self, payment, requirements) -> Dict[str, Any]
-    def settle(self, payment, requirements) -> Dict[str, Any]
-    def supported(self) -> Dict[str, Any]
-```
-
-### Utility Functions
-
-```python
-def quick_setup(facilitator_url: str, agent_name: str) -> Dict[str, Any]
-def create_payment_config(facilitator_url: str, agent_name: str, **kwargs) -> PaymentConfig
-def create_facilitator_client(facilitator_url: str) -> FacilitatorClient
-def decode_payment(x_payment_header: str) -> PaymentPayload
-def require_payment(requirement: PaymentRequirement, config: PaymentConfig)
-```
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `UI_PORT` | 5000 | Flask server port |
-| `HOST` | 0.0.0.0 | Server host |
-| `AGENT_PORT` | 3000 | Agent bridge port |
-| `FACILITATOR_URL` | http://localhost:3001 | NANDA Points facilitator |
-| `AGENT_NAME` | nanda-adapter | Agent name for payments |
-| `CLAUDE_API_KEY` | - | Optional Claude API key |
-| `DEBUG` | False | Flask debug mode |
-
-## Deployment
-
-### Development
+### Setup MongoDB & Agents
 
 ```bash
-python run_ui_agent_https_with_payments.py
+# Start MongoDB
+mongod
+
+# Seed agent accounts (if needed)
+cd ../packages/facilitator
+npm run seed
 ```
 
-### Production with Gunicorn
+## Production Deployment
+
+### Environment Variables
 
 ```bash
-gunicorn -w 4 -b 0.0.0.0:5000 run_ui_agent_https_with_payments:app
+export FACILITATOR_URL=https://facilitator.nanda.network
+export AGENT_NAME=my-production-service
+export UI_PORT=8080
+export DEBUG=False
 ```
 
-### Production with Waitress
+### With Gunicorn
 
 ```bash
-waitress-serve --host=0.0.0.0 --port=5000 run_ui_agent_https_with_payments:app
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:8080 run_ui_agent_https_with_payments:app
 ```
 
 ### Docker Deployment
-
-Create `Dockerfile`:
 
 ```dockerfile
 FROM python:3.11-slim
@@ -393,117 +503,81 @@ EXPOSE 5000
 CMD ["python", "run_ui_agent_https_with_payments.py"]
 ```
 
-## Monitoring and Analytics
-
-### Payment Statistics
-
-```bash
-curl http://localhost:5000/api/stats
-```
-
-```json
-{
-  "total_messages": 150,
-  "paid_messages": 120,
-  "free_requests": 30,
-  "total_revenue_np": 1200,
-  "facilitator_url": "http://localhost:3001",
-  "agent_name": "nanda-adapter",
-  "timestamp": 1705123456.789
-}
-```
-
-### Health Monitoring
-
-```bash
-curl http://localhost:5000/api/health
-```
-
-```json
-{
-  "status": "healthy",
-  "timestamp": 1705123456.789,
-  "agent_port": 3000,
-  "ui_port": 5000,
-  "payments": "enabled",
-  "facilitator": "http://localhost:3001",
-  "agent_name": "nanda-adapter"
-}
-```
-
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Payment SDK not loaded"**
-   - Check facilitator URL is accessible
-   - Verify NANDA Points facilitator is running
-   - Check environment variables
+**"Facilitator connection failed"**
+```python
+# Check facilitator status
+from nanda_payments_sdk import create_facilitator_client
 
-2. **"Agent bridge connection failed"**
-   - Ensure agent bridge is running on configured port
-   - Check AGENT_PORT environment variable
-   - Verify network connectivity
+facilitator = create_facilitator_client("http://localhost:3001")
+try:
+    status = facilitator.supported()
+    print("✅ Facilitator connected:", status)
+except Exception as e:
+    print("❌ Facilitator error:", e)
+```
 
-3. **"Payment verification failed"**
-   - Check payment format and encoding
-   - Verify sufficient balance in payer account
-   - Ensure facilitator is accessible
+**"Agent not found"**
+```bash
+# Check available agents in database
+mongo
+> use nanda_points
+> db.agents.find({}, {name: 1, balance: 1})
+```
 
-4. **"python_a2a not found"**
-   - Install the python_a2a library separately
-   - Check if alternative agent communication method needed
+**"Insufficient balance"**
+```python
+# The facilitator manages balances automatically
+# Ensure your agents have been seeded with initial balance
+```
 
 ### Debug Mode
 
-Enable debug logging:
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
-```bash
-DEBUG=True python run_ui_agent_https_with_payments.py
+# Now all payment operations will show detailed logs
 ```
 
 ### Test Without Facilitator
 
-The adapter gracefully handles facilitator unavailability:
-
 ```python
-# Will show "payments": "disabled" in health check
-# Payment decorators will still work but show warnings
+# The SDK gracefully handles facilitator unavailability
+# Protected routes will return HTTP 500 instead of 402
 ```
 
-## Migration from Original
+## Examples & Use Cases
 
-### Step-by-Step Migration
+### API Monetization
+Transform any REST API into a paid service with per-endpoint pricing.
 
-1. **Keep original**: `run_ui_agent_https.py` as reference
-2. **Use new version**: `run_ui_agent_https_with_payments.py` as main
-3. **Test free endpoints**: Ensure compatibility
-4. **Configure payments**: Set up facilitator connection
-5. **Test paid endpoints**: Verify payment flow
-6. **Monitor usage**: Check statistics and health
+### Content Paywalls
+Protect premium content, articles, or media with micro-payments.
 
-### Gradual Rollout
+### Computational Services
+Charge for expensive operations like AI inference, data processing, or analysis.
 
-- Start with test endpoints to verify payment integration
-- Use free send endpoint for comparison testing
-- Gradually migrate users to paid endpoints
-- Monitor payment statistics and adjust as needed
+### Rate Limiting
+Use payments as a natural rate limiting mechanism.
 
-## Related Projects
-
-- **Original Adapter**: [https://github.com/projnanda/adapter](https://github.com/projnanda/adapter)
-- **TypeScript SDK**: [../sdks/payments-sdk/](../sdks/payments-sdk/)
-- **NANDA Points Facilitator**: [../packages/facilitator/](../packages/facilitator/)
-- **x402 Protocol**: [https://github.com/coinbase/x402](https://github.com/coinbase/x402)
+### Freemium Models
+Offer free tiers alongside paid premium features.
 
 ## Contributing
 
-1. Test with original adapter functionality
-2. Ensure payment integration doesn't break existing features
-3. Add tests for payment scenarios
-4. Update documentation for any changes
-5. Maintain backward compatibility
+1. Ensure all code passes linting: `python -m flake8 *.py`
+2. Test payment flows thoroughly
+3. Update documentation for API changes
+4. Maintain backward compatibility
 
 ## License
 
-Same license as the original NANDA Adapter project.
+Same license as the NANDA Points project.
+
+---
+
+**Ready to monetize your Python APIs? Start with `quick_setup()` and see the magic happen! 🚀**

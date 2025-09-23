@@ -7,14 +7,19 @@ from python_a2a import run_server, AgentBridge as BaseAgentBridge
 import requests
 from anthropic import Anthropic
 
+
 class AgentBridge(BaseAgentBridge):
     def __init__(self, name="agent_bridge", registry_url=None, claude_api_key=None):
         super().__init__(name)
-        self.registry_url = registry_url or os.getenv('REGISTRY_URL', 'http://localhost:8000')
+        self.registry_url = registry_url or os.getenv(
+            "REGISTRY_URL", "http://localhost:8000"
+        )
         self.claude_client = None
 
-        if claude_api_key or os.getenv('CLAUDE_API_KEY'):
-            self.claude_client = Anthropic(api_key=claude_api_key or os.getenv('CLAUDE_API_KEY'))
+        if claude_api_key or os.getenv("CLAUDE_API_KEY"):
+            self.claude_client = Anthropic(
+                api_key=claude_api_key or os.getenv("CLAUDE_API_KEY")
+            )
 
         self.conversations = {}
 
@@ -25,8 +30,8 @@ class AgentBridge(BaseAgentBridge):
     async def handle_message(self, message, metadata=None):
         """Main message handling logic"""
         try:
-            sender = metadata.get('sender', 'unknown') if metadata else 'unknown'
-            conversation_id = metadata.get('conversation_id') if metadata else None
+            sender = metadata.get("sender", "unknown") if metadata else "unknown"
+            conversation_id = metadata.get("conversation_id") if metadata else None
 
             self.logger.info(f"Received message from {sender}: {message[:100]}...")
 
@@ -35,19 +40,21 @@ class AgentBridge(BaseAgentBridge):
                 if conversation_id not in self.conversations:
                     self.conversations[conversation_id] = []
 
-                self.conversations[conversation_id].append({
-                    'timestamp': time.time(),
-                    'sender': sender,
-                    'message': message,
-                    'metadata': metadata
-                })
+                self.conversations[conversation_id].append(
+                    {
+                        "timestamp": time.time(),
+                        "sender": sender,
+                        "message": message,
+                        "metadata": metadata,
+                    }
+                )
 
             # Process message based on type
-            if message.startswith('/mcp'):
+            if message.startswith("/mcp"):
                 return await self.handle_mcp_query(message, metadata)
-            elif message.startswith('/claude'):
+            elif message.startswith("/claude"):
                 return await self.handle_claude_query(message, metadata)
-            elif message.startswith('/send'):
+            elif message.startswith("/send"):
                 return await self.handle_send_to_agent(message, metadata)
             else:
                 return await self.improve_message(message, metadata)
@@ -63,10 +70,12 @@ class AgentBridge(BaseAgentBridge):
                 response = self.claude_client.messages.create(
                     model="claude-3-sonnet-20240229",
                     max_tokens=1000,
-                    messages=[{
-                        "role": "user",
-                        "content": f"Please improve this message while maintaining its meaning: {message}"
-                    }]
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"Please improve this message while maintaining its meaning: {message}",
+                        }
+                    ],
                 )
                 return response.content[0].text
             else:
@@ -101,10 +110,7 @@ class AgentBridge(BaseAgentBridge):
             response = self.claude_client.messages.create(
                 model="claude-3-sonnet-20240229",
                 max_tokens=1500,
-                messages=[{
-                    "role": "user",
-                    "content": query
-                }]
+                messages=[{"role": "user", "content": query}],
             )
 
             return response.content[0].text
@@ -115,7 +121,7 @@ class AgentBridge(BaseAgentBridge):
     async def handle_send_to_agent(self, message, metadata=None):
         """Send message to specific agent"""
         try:
-            parts = message[5:].strip().split(' ', 1)  # Remove '/send'
+            parts = message[5:].strip().split(" ", 1)  # Remove '/send'
             if len(parts) < 2:
                 return "Usage: /send <agent_name> <message>"
 
@@ -135,19 +141,21 @@ class AgentBridge(BaseAgentBridge):
                 "name": self.name,
                 "url": f"http://localhost:{self.port}",
                 "capabilities": ["message_processing", "claude_ai", "mcp_queries"],
-                "status": "active"
+                "status": "active",
             }
 
             response = requests.post(
-                f"{self.registry_url}/register",
-                json=registration_data,
-                timeout=5
+                f"{self.registry_url}/register", json=registration_data, timeout=5
             )
 
             if response.status_code == 200:
-                self.logger.info(f"Successfully registered with registry: {self.registry_url}")
+                self.logger.info(
+                    f"Successfully registered with registry: {self.registry_url}"
+                )
             else:
-                self.logger.warning(f"Registry registration failed: {response.status_code}")
+                self.logger.warning(
+                    f"Registry registration failed: {response.status_code}"
+                )
 
         except Exception as e:
             self.logger.warning(f"Could not register with registry: {e}")
@@ -160,25 +168,24 @@ class AgentBridge(BaseAgentBridge):
         """Get all conversation IDs"""
         return list(self.conversations.keys())
 
+
 def create_agent_bridge(name="agent_bridge", port=3000, **kwargs):
     """Factory function to create an agent bridge"""
     bridge = AgentBridge(name, **kwargs)
     bridge.port = port
     return bridge
 
+
 def main():
     # Configuration from environment
-    name = os.getenv('AGENT_NAME', 'agent_bridge')
-    port = int(os.getenv('AGENT_PORT', 3000))
-    registry_url = os.getenv('REGISTRY_URL')
-    claude_api_key = os.getenv('CLAUDE_API_KEY')
+    name = os.getenv("AGENT_NAME", "agent_bridge")
+    port = int(os.getenv("AGENT_PORT", 3000))
+    registry_url = os.getenv("REGISTRY_URL")
+    claude_api_key = os.getenv("CLAUDE_API_KEY")
 
     # Create and configure agent bridge
     bridge = create_agent_bridge(
-        name=name,
-        port=port,
-        registry_url=registry_url,
-        claude_api_key=claude_api_key
+        name=name, port=port, registry_url=registry_url, claude_api_key=claude_api_key
     )
 
     print(f"Starting Agent Bridge: {name}")
@@ -191,6 +198,7 @@ def main():
 
     # Start the server
     run_server(bridge, port=port)
+
 
 if __name__ == "__main__":
     main()

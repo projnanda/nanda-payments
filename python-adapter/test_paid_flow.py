@@ -6,14 +6,16 @@ Tests the enhanced Python SDK with client-side payment creation
 
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from nanda_payments_sdk import (
     create_payment,
     encode_payment,
     create_and_encode_payment,
-    send_paid_request
+    send_paid_request,
 )
+
 
 def test_payment_creation():
     """Test payment creation and encoding"""
@@ -25,7 +27,7 @@ def test_payment_creation():
         amount=10,
         facilitator_url="http://localhost:3001",
         resource="http://localhost:5000/api/send",
-        description="Test message payment"
+        description="Test message payment",
     )
 
     print(f"✅ Payment created:")
@@ -41,6 +43,7 @@ def test_payment_creation():
 
     return payment, encoded
 
+
 def test_convenience_function():
     """Test convenience function"""
     print("\n🧪 Testing convenience function...")
@@ -51,13 +54,14 @@ def test_convenience_function():
         amount=10,
         facilitator_url="http://localhost:3001",
         resource="http://localhost:5000/api/send",
-        description="Convenience function test"
+        description="Convenience function test",
     )
 
     print(f"✅ One-step payment creation and encoding")
     print(f"   Base64: {encoded[:50]}...")
 
     return encoded
+
 
 def test_manual_curl_equivalent():
     """Test manual payment creation for curl comparison"""
@@ -69,18 +73,21 @@ def test_manual_curl_equivalent():
         amount=10,
         facilitator_url="http://localhost:3001",
         resource="http://localhost:5000/api/send",
-        description="Hi, I'm steve."
+        description="Hi, I'm steve.",
     )
 
     print(f"✅ Payment header created:")
     print(f"X-PAYMENT: {payment_header}")
     print(f"\n📋 Manual curl command:")
-    print(f'curl -i -X POST http://localhost:5000/api/send \\')
+    print(f"curl -i -X POST http://localhost:5000/api/send \\")
     print(f'  -H "Content-Type: application/json" \\')
     print(f'  -H "X-PAYMENT: {payment_header}" \\')
-    print(f'  -d \'{{"message": "Hi, I\'m steve.", "conversation_id": "steve-conv-3", "client_id": "claude-desktop"}}\'')
+    print(
+        f'  -d \'{{"message": "Hi, I\'m steve.", "conversation_id": "steve-conv-3", "client_id": "claude-desktop"}}\''
+    )
 
     return payment_header
+
 
 def test_sdk_http_client():
     """Test SDK's built-in HTTP client"""
@@ -96,8 +103,8 @@ def test_sdk_http_client():
             data={
                 "message": "Hi, I'm steve using the Python SDK!",
                 "conversation_id": "steve-conv-sdk",
-                "client_id": "claude-desktop"
-            }
+                "client_id": "claude-desktop",
+            },
         )
 
         print(f"✅ HTTP request sent")
@@ -109,6 +116,7 @@ def test_sdk_http_client():
     except Exception as e:
         print(f"❌ HTTP request failed: {e}")
         return None
+
 
 if __name__ == "__main__":
     print("🚀 NANDA Points Python SDK - Complete Flow Test")
