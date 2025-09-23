@@ -378,6 +378,145 @@ def quick_setup(facilitator_url: str, agent_name: str) -> Dict[str, Any]:
     }
 
 
+def create_payment(
+    from_agent: str,
+    to_agent: str,
+    amount: int,
+    facilitator_url: str,
+    resource: str = "",
+    description: str = "NANDA Points payment"
+) -> PaymentPayload:
+    """
+    Create a payment payload for client-side use
+
+    Args:
+        from_agent: Paying agent name
+        to_agent: Receiving agent name
+        amount: Amount in NANDA Points
+        facilitator_url: Facilitator URL
+        resource: Optional resource being paid for
+        description: Payment description
+
+    Returns:
+        PaymentPayload ready for encoding
+    """
+    return PaymentPayload(
+        x402_version=1,
+        scheme="nanda-points",
+        network="nanda-network",
+        pay_to=to_agent,
+        amount=str(amount),
+        from_agent=from_agent,
+        tx_id=str(uuid.uuid4()),
+        timestamp=int(time.time() * 1000),
+        extra={
+            "facilitatorUrl": facilitator_url,
+            "resource": resource,
+            "description": description
+        }
+    )
+
+
+def encode_payment(payment: PaymentPayload) -> str:
+    """
+    Encode payment payload as base64 for X-PAYMENT header
+
+    Args:
+        payment: PaymentPayload to encode
+
+    Returns:
+        Base64 encoded payment string for X-PAYMENT header
+    """
+    # Convert PaymentPayload to dict with correct field names for x402 protocol
+    payment_dict = {
+        "x402Version": payment.x402_version,
+        "scheme": payment.scheme,
+        "network": payment.network,
+        "payTo": payment.pay_to,
+        "amount": payment.amount,
+        "from": payment.from_agent,
+        "txId": payment.tx_id,
+        "timestamp": payment.timestamp,
+        "extra": payment.extra or {}
+    }
+
+    # Serialize to JSON and encode as base64
+    json_str = json.dumps(payment_dict, separators=(',', ':'))
+    return base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+
+
+def create_and_encode_payment(
+    from_agent: str,
+    to_agent: str,
+    amount: int,
+    facilitator_url: str,
+    resource: str = "",
+    description: str = "NANDA Points payment"
+) -> str:
+    """
+    Convenience function to create and encode payment in one step
+
+    Returns:
+        Base64 encoded payment string ready for X-PAYMENT header
+    """
+    payment = create_payment(from_agent, to_agent, amount, facilitator_url, resource, description)
+    return encode_payment(payment)
+
+
+def send_paid_request(
+    url: str,
+    from_agent: str,
+    to_agent: str,
+    amount: int,
+    facilitator_url: str,
+    data: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    method: str = "POST"
+) -> requests.Response:
+    """
+    Send HTTP request with NANDA Points payment
+
+    Args:
+        url: Target URL
+        from_agent: Paying agent name
+        to_agent: Receiving agent name
+        amount: Payment amount in NANDA Points
+        facilitator_url: Facilitator URL
+        data: Request body data
+        headers: Additional headers
+        method: HTTP method
+
+    Returns:
+        Response object
+    """
+    # Create payment
+    payment_header = create_and_encode_payment(
+        from_agent=from_agent,
+        to_agent=to_agent,
+        amount=amount,
+        facilitator_url=facilitator_url,
+        resource=url,
+        description=f"Payment for {method} {url}"
+    )
+
+    # Prepare headers
+    request_headers = {
+        "Content-Type": "application/json",
+        "X-PAYMENT": payment_header
+    }
+    if headers:
+        request_headers.update(headers)
+
+    # Send request
+    session = requests.Session()
+    if method.upper() == "POST":
+        return session.post(url, json=data, headers=request_headers, timeout=30)
+    elif method.upper() == "GET":
+        return session.get(url, headers=request_headers, timeout=30)
+    else:
+        return session.request(method, url, json=data, headers=request_headers, timeout=30)
+
+
 # Example usage and testing
 if __name__ == "__main__":
     # Test the SDK
