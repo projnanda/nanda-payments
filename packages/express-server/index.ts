@@ -18,12 +18,6 @@ const app = express();
 app.use(
   npPaymentMiddleware(
     {
-      "GET /weather": {
-        priceNP: 1, // 1 NANDA Point
-        recipient: payTo,
-        description: "Access to weather data",
-        maxTimeoutSeconds: 60,
-      },
       "/premium/*": {
         priceNP: 10, // 10 NANDA Points for premium content
         recipient: payTo,
@@ -45,7 +39,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Paid endpoint - requires 1 NP
+// Free endpoint (no payment required)
 app.get("/weather", (req, res) => {
   res.json({
     report: {
@@ -54,8 +48,8 @@ app.get("/weather", (req, res) => {
       location: "San Francisco",
       timestamp: new Date().toISOString(),
     },
-    cost: "1 NP",
-    message: "Weather data successfully accessed with NANDA Points payment!",
+    cost: "Free",
+    message: "Weather data accessed for free!",
   });
 });
 
@@ -100,13 +94,13 @@ app.listen(PORT, () => {
   console.log("");
   console.log("📡 Endpoints:");
   console.log(`   GET  /health           - Free health check`);
-  console.log(`   GET  /weather          - Weather data (1 NP)`);
+  console.log(`   GET  /weather          - Free weather data`);
   console.log(`   GET  /premium/content  - Premium content (10 NP)`);
   console.log(`   GET  /premium/analysis - Premium analysis (10 NP)`);
   console.log("");
-  console.log("🔧 Test with any x402-compatible client:");
+  console.log("🔧 Test with curl:");
   console.log(`   curl http://localhost:${PORT}/weather`);
-  console.log("   (Should return 402 Payment Required)");
+  console.log("   (Free endpoint, returns weather data)");
 });
 
 export { app };

@@ -39,7 +39,7 @@ function createExactPaymentRequirements(
   price: Price,
   network: Network,
   resource: Resource,
-  description = "",
+  description = ""
 ): PaymentRequirements {
   const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
   if ("error" in atomicAmountForAsset) {
@@ -76,7 +76,7 @@ function createExactPaymentRequirements(
 async function verifyPayment(
   req: express.Request,
   res: express.Response,
-  paymentRequirements: PaymentRequirements[],
+  paymentRequirements: PaymentRequirements[]
 ): Promise<boolean> {
   const payment = req.header("X-PAYMENT");
   if (!payment) {
@@ -136,7 +136,7 @@ app.get("/delayed-settlement", async (req, res) => {
       // network: "base" // uncomment for Base mainnet
       "base-sepolia",
       resource,
-      "Access to weather data (async)",
+      "Access to weather data (async)"
     ),
   ];
 
@@ -155,7 +155,7 @@ app.get("/delayed-settlement", async (req, res) => {
   try {
     const settleResponse = await settle(
       exact.evm.decodePayment(req.header("X-PAYMENT")!),
-      paymentRequirements[0],
+      paymentRequirements[0]
     );
     const responseHeader = settleResponseHeader(settleResponse);
     // In a real application, you would store this response header
@@ -182,7 +182,7 @@ app.get("/dynamic-price", async (req, res) => {
       // network: "base" // uncomment for Base mainnet
       "base-sepolia",
       resource,
-      "Access to weather data",
+      "Access to weather data"
     ),
   ];
 
@@ -193,7 +193,7 @@ app.get("/dynamic-price", async (req, res) => {
     // Process payment synchronously
     const settleResponse = await settle(
       exact.evm.decodePayment(req.header("X-PAYMENT")!),
-      paymentRequirements[0],
+      paymentRequirements[0]
     );
     const responseHeader = settleResponseHeader(settleResponse);
     res.setHeader("X-PAYMENT-RESPONSE", responseHeader);
@@ -235,7 +235,7 @@ app.get("/multiple-payment-requirements", async (req, res) => {
       },
       // network: "base" // uncomment for Base mainnet
       "base-sepolia",
-      resource,
+      resource
     ),
   ];
 

@@ -23,17 +23,18 @@ export type {
 } from "./types.js";
 
 // Error classes
-export {
-  NPPaymentError,
-  NPVerificationError,
-  NPSettlementError,
-} from "./types.js";
+export { NPPaymentError, NPVerificationError, NPSettlementError } from "./types.js";
 
 // NANDA Points scheme
 export { nandaPoints, npUtils } from "./nanda-points-scheme.js";
 
 // MongoDB utilities
-export { connectToMongoDB, getAgentCollection, getWalletCollection, mongoUtils } from "./mongodb.js";
+export {
+  connectToMongoDB,
+  getAgentCollection,
+  getWalletCollection,
+  mongoUtils,
+} from "./mongodb.js";
 
 // Express middleware
 export { npPaymentMiddleware, createNPFacilitatorClient } from "./middleware.js";

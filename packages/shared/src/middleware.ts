@@ -11,15 +11,21 @@ import {
   NPPaymentConfig,
   NPPaymentError,
 } from "./types.js";
-import { nandaPoints, npUtils } from "./nanda-points-scheme.js";
+import { nandaPoints } from "./nanda-points-scheme.js";
 
 export interface NPFacilitatorClient {
-  verify(payment: PaymentPayload, requirements: PaymentRequirements): Promise<{
+  verify(
+    payment: PaymentPayload,
+    requirements: PaymentRequirements
+  ): Promise<{
     isValid: boolean;
     invalidReason?: string;
     payer?: string;
   }>;
-  settle(payment: PaymentPayload, requirements: PaymentRequirements): Promise<{
+  settle(
+    payment: PaymentPayload,
+    requirements: PaymentRequirements
+  ): Promise<{
     success: boolean;
     txId: string;
     amount: string;
@@ -90,10 +96,7 @@ export function createNPFacilitatorClient(facilitatorUrl: string): NPFacilitator
  * Payment middleware for NANDA Points
  * Replaces x402-express paymentMiddleware
  */
-export function npPaymentMiddleware(
-  routes: NPRoutesConfig,
-  facilitatorUrl: string
-) {
+export function npPaymentMiddleware(routes: NPRoutesConfig, facilitatorUrl: string) {
   const facilitator = createNPFacilitatorClient(facilitatorUrl);
   const x402Version = 1;
 
@@ -166,10 +169,10 @@ export function npPaymentMiddleware(
     const originalEnd = res.end.bind(res);
     let endArgs: Parameters<typeof res.end> | null = null;
 
-    res.end = function (chunk: any, encoding?: BufferEncoding, cb?: () => void) {
+    res.end = function (chunk: unknown, encoding?: BufferEncoding, cb?: () => void) {
       endArgs = [chunk, encoding, cb];
       return res;
-    } as any;
+    } as typeof res.end;
 
     // Continue to route handler
     await next();
@@ -180,13 +183,15 @@ export function npPaymentMiddleware(
         const settlement = await facilitator.settle(decodedPayment, paymentRequirements);
         if (settlement.success) {
           // Create X-PAYMENT-RESPONSE header
-          const responseHeader = btoa(JSON.stringify({
-            txId: settlement.txId,
-            amount: settlement.amount,
-            from: settlement.from,
-            to: settlement.to,
-            timestamp: settlement.timestamp,
-          }));
+          const responseHeader = btoa(
+            JSON.stringify({
+              txId: settlement.txId,
+              amount: settlement.amount,
+              from: settlement.from,
+              to: settlement.to,
+              timestamp: settlement.timestamp,
+            })
+          );
           res.setHeader("X-PAYMENT-RESPONSE", responseHeader);
         }
       } catch (error) {
@@ -231,9 +236,7 @@ function findMatchingRoute(
  * Check if path matches route pattern
  */
 function matchesRoute(route: string, path: string, method: string): boolean {
-  const [routeMethod, routePath] = route.includes(" ")
-    ? route.split(" ", 2)
-    : ["*", route];
+  const [routeMethod, routePath] = route.includes(" ") ? route.split(" ", 2) : ["*", route];
 
   // Check method
   if (routeMethod !== "*" && routeMethod.toUpperCase() !== method.toUpperCase()) {
@@ -241,9 +244,7 @@ function matchesRoute(route: string, path: string, method: string): boolean {
   }
 
   // Convert route pattern to regex
-  const pattern = routePath
-    .replace(/\*/g, ".*")
-    .replace(/\//g, "\\/");
+  const pattern = routePath.replace(/\*/g, ".*").replace(/\//g, "\\/");
 
   const regex = new RegExp(`^${pattern}$`);
   return regex.test(path);

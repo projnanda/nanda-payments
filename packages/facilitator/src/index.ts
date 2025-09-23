@@ -5,6 +5,7 @@
 
 import { config } from "dotenv";
 import express from "express";
+import { Db } from "mongodb";
 import {
   connectToMongoDB,
   NPFacilitatorConfig,
@@ -32,7 +33,7 @@ const facilitatorConfig: NPFacilitatorConfig = {
   baseUrl: process.env.FACILITATOR_BASE_URL || "http://localhost:4021",
 };
 
-let database: any = null;
+let database: Db | null = null;
 
 // Initialize MongoDB connection
 async function initializeDatabase() {
@@ -124,7 +125,7 @@ app.post("/settle", async (req, res) => {
     }
 
     // Then settle it (update balances, create receipt)
-    const settlement = await settlePayment(payment, paymentRequirements);
+    const settlement = await settlePayment(payment);
     res.json(settlement);
   } catch (error) {
     console.error("Error in /settle:", error);
@@ -186,7 +187,7 @@ async function verifyPayment(
     );
 
     if (!validation.valid) {
-      throw new NPVerificationError(validation.reason!, {
+      throw new NPVerificationError(validation.reason ?? "Validation failed", {
         agent: payment.from,
         balance: validation.balance,
         required: paymentAmount,
@@ -239,10 +240,7 @@ async function verifyPayment(
 /**
  * Settle payment in NANDA Points system
  */
-async function settlePayment(
-  payment: PaymentPayload,
-  requirements: PaymentRequirements
-): Promise<SettlementResponse> {
+async function settlePayment(payment: PaymentPayload): Promise<SettlementResponse> {
   try {
     // Check if already settled
     const existingReceipt = await mongoUtils.findReceipt(database, payment.txId);
@@ -287,12 +285,7 @@ async function settlePayment(
  * Execute real NP transaction using MongoDB
  * Based on the working implementation from main branch
  */
-async function executeNPTransaction(
-  from: string,
-  to: string,
-  amount: number,
-  txId: string
-) {
+async function executeNPTransaction(from: string, to: string, amount: number, txId: string) {
   const createdAt = new Date().toISOString();
 
   // Get collection references
@@ -306,7 +299,8 @@ async function executeNPTransaction(
 
   if (!fromWallet) throw new Error(`Sender wallet not found: ${from}`);
   if (!toWallet) throw new Error(`Receiver wallet not found: ${to}`);
-  if (fromWallet.balanceMinor < amount) throw new Error(`Insufficient funds: ${fromWallet.balanceMinor} < ${amount}`);
+  if (fromWallet.balanceMinor < amount)
+    throw new Error(`Insufficient funds: ${fromWallet.balanceMinor} < ${amount}`);
 
   // 2. Deduct from sender's wallet
   const updatedFromWallet = await walletCollection.findOneAndUpdate(
@@ -352,7 +346,9 @@ async function executeNPTransaction(
   await receiptCollection.insertOne(receipt);
 
   console.log(`✅ Real NP transaction completed: ${from} → ${to}, ${amount} NP`);
-  console.log(`   Balances: ${from}=${updatedFromWallet.balanceMinor}, ${to}=${updatedToWallet.balanceMinor}`);
+  console.log(
+    `   Balances: ${from}=${updatedFromWallet.balanceMinor}, ${to}=${updatedToWallet.balanceMinor}`
+  );
 
   return receipt;
 }

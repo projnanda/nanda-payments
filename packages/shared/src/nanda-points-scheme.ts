@@ -49,11 +49,7 @@ export const nandaPoints = {
     try {
       return btoa(JSON.stringify(payload));
     } catch (error) {
-      throw new NPPaymentError(
-        "Failed to encode payment payload",
-        "ENCODING_ERROR",
-        error
-      );
+      throw new NPPaymentError("Failed to encode payment payload", "ENCODING_ERROR", error);
     }
   },
 
@@ -67,19 +63,14 @@ export const nandaPoints = {
 
       // Validate required fields
       if (!decoded.scheme || decoded.scheme !== "nanda-points") {
-        throw new NPPaymentError(
-          "Invalid payment scheme",
-          "INVALID_SCHEME",
-          { expected: "nanda-points", received: decoded.scheme }
-        );
+        throw new NPPaymentError("Invalid payment scheme", "INVALID_SCHEME", {
+          expected: "nanda-points",
+          received: decoded.scheme,
+        });
       }
 
       if (!decoded.payTo || !decoded.amount || !decoded.from || !decoded.txId) {
-        throw new NPPaymentError(
-          "Missing required payment fields",
-          "INVALID_PAYLOAD",
-          decoded
-        );
+        throw new NPPaymentError("Missing required payment fields", "INVALID_PAYLOAD", decoded);
       }
 
       return {
@@ -97,23 +88,14 @@ export const nandaPoints = {
       if (error instanceof NPPaymentError) {
         throw error;
       }
-      throw new NPPaymentError(
-        "Failed to decode payment payload",
-        "DECODING_ERROR",
-        error
-      );
+      throw new NPPaymentError("Failed to decode payment payload", "DECODING_ERROR", error);
     }
   },
 
   /**
    * Create a payment payload for NANDA Points transaction
    */
-  createPaymentPayload(
-    from: string,
-    to: string,
-    amount: number,
-    txId: string
-  ): PaymentPayload {
+  createPaymentPayload(from: string, to: string, amount: number, txId: string): PaymentPayload {
     return {
       x402Version: 1,
       scheme: "nanda-points",
@@ -165,11 +147,7 @@ export const npUtils = {
   parseAmount(amount: string): number {
     const parsed = parseFloat(amount);
     if (isNaN(parsed) || parsed < 0) {
-      throw new NPPaymentError(
-        "Invalid amount format",
-        "INVALID_AMOUNT",
-        { amount }
-      );
+      throw new NPPaymentError("Invalid amount format", "INVALID_AMOUNT", { amount });
     }
     return Math.floor(parsed); // NP amounts are integers
   },

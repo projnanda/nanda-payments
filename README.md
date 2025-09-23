@@ -231,6 +231,79 @@ npm run test:x402
 npm run test:clients
 ```
 
+## Example Testing Prompts
+
+### Testing Free Resources
+
+The following prompts can be used to test free endpoints that don't require payment:
+
+#### Health Check
+```
+Can you test the health endpoint of our Express server? It should be available at http://localhost:4021/health and return basic server information without requiring payment.
+```
+
+#### Free Weather Data
+```
+Please test our free weather endpoint at http://localhost:4021/weather. This should return weather information without requiring any NANDA Points payment.
+```
+
+### Testing Paid Resources
+
+These prompts test endpoints that require NANDA Points payments:
+
+#### Premium Content (10 NP)
+```
+Test the premium content endpoint at http://localhost:4021/premium/content. This requires a payment of 10 NANDA Points. You should first try without payment (expect HTTP 402), then make a proper payment using the x402 protocol.
+```
+
+#### Premium Analysis (10 NP)
+```
+Test the premium analysis endpoint at http://localhost:4021/premium/analysis. This costs 10 NANDA Points and should return market analysis data. Please test both the payment failure and success scenarios.
+```
+
+### Testing Payment Flow
+
+#### Complete x402 Flow
+```
+Please test the complete x402 payment flow:
+1. Try accessing /premium/content without payment - should get HTTP 402
+2. Parse the payment requirements from the response
+3. Create a valid NANDA Points payment with txId, amount, from/to agents
+4. Retry the request with the X-PAYMENT header
+5. Verify the response includes X-PAYMENT-RESPONSE header with settlement details
+6. Check that the database balances were updated correctly
+```
+
+#### Error Scenarios
+```
+Test these error scenarios:
+1. Insufficient balance - agent with 0 NP trying to pay 10 NP
+2. Invalid agent - non-existent agent trying to make payment
+3. Duplicate transaction - using the same txId twice
+4. Invalid payment format - malformed X-PAYMENT header
+```
+
+### Database Verification Prompts
+
+#### Balance Tracking
+```
+After running payment tests, please check:
+1. The sender's balance decreased by the payment amount
+2. The recipient's balance increased by the payment amount
+3. A transaction record was created in the transactions collection
+4. A receipt was generated in the receipts collection
+5. All records have matching txId values
+```
+
+#### Transaction Logs
+```
+Please query the MongoDB database and show:
+1. Recent transactions from the last 10 minutes
+2. Agent wallet balances before and after test payments
+3. Receipt details for successful settlements
+4. Any failed transaction attempts and their error reasons
+```
+
 ## Development
 
 ### Project Structure
