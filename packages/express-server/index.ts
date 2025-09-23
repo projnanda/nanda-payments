@@ -4,7 +4,7 @@ import { npPaymentMiddleware } from "x402-nanda-shared";
 
 config();
 
-const facilitatorUrl = process.env.FACILITATOR_URL || "http://localhost:4022";
+const facilitatorUrl = process.env.FACILITATOR_URL || "http://localhost:3001";
 const payTo = process.env.ADDRESS || "system"; // Agent name instead of blockchain address
 
 if (!facilitatorUrl || !payTo) {
@@ -85,7 +85,7 @@ app.get("/premium/analysis", (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 4021;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log(`🚀 x402 NANDA Points Express Server running at http://localhost:${PORT}`);

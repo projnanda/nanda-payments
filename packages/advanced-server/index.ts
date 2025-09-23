@@ -271,6 +271,6 @@ app.get("/multiple-payment-requirements", async (req, res) => {
   }
 });
 
-app.listen(4021, () => {
-  console.log(`Server listening at http://localhost:4021`);
+app.listen(3000, () => {
+  console.log(`Server listening at http://localhost:3000`);
 });

@@ -30,7 +30,7 @@ app.use(express.json());
 const facilitatorConfig: NPFacilitatorConfig = {
   mongoUri: process.env.MONGODB_URI || "mongodb://localhost:27017",
   dbName: process.env.NP_DB_NAME || "nanda_points",
-  baseUrl: process.env.FACILITATOR_BASE_URL || "http://localhost:4021",
+  baseUrl: process.env.FACILITATOR_BASE_URL || "http://localhost:3000",
 };
 
 let database: Db | null = null;
@@ -363,7 +363,7 @@ app.get("/health", (req, res) => {
   });
 });
 
-const PORT = process.env.FACILITATOR_PORT || 4022;
+const PORT = process.env.FACILITATOR_PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`🏦 NANDA Points Facilitator running at http://localhost:${PORT}`);

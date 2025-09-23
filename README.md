@@ -59,7 +59,7 @@ npm run dev:express
 ```
 
 Your x402-compliant server will be running at:
-- **Server**: `http://localhost:4021`
+- **Server**: `http://localhost:3000`
 - **Example endpoints**: `/weather` (requires payment), `/health` (free)
 
 ### 5. Test with x402 Clients
@@ -120,7 +120,7 @@ The following diagram shows the complete x402 payment flow from the Requesting A
 sequenceDiagram
     participant RA as Requesting Agent
     participant RS as Resource Server<br/>(Express/MCP)
-    participant FS as Facilitator Service<br/>(Port 4022)
+    participant FS as Facilitator Service<br/>(Port 3001)
     participant DB as MongoDB<br/>(NANDA Points)
 
     Note over RA, DB: 1. Initial Request (No Payment)
@@ -131,7 +131,7 @@ sequenceDiagram
     Note right of RS: Route requires 1 NP
 
     RS-->>RA: HTTP 402 Payment Required
-    Note right of RS: {<br/>  "x402Version": 1,<br/>  "error": "X-PAYMENT header is required",<br/>  "accepts": [{<br/>    "scheme": "nanda-points",<br/>    "network": "nanda-network",<br/>    "maxAmountRequired": "1",<br/>    "asset": "NP",<br/>    "payTo": "system",<br/>    "facilitatorUrl": "http://localhost:4022"<br/>  }]<br/>}
+    Note right of RS: {<br/>  "x402Version": 1,<br/>  "error": "X-PAYMENT header is required",<br/>  "accepts": [{<br/>    "scheme": "nanda-points",<br/>    "network": "nanda-network",<br/>    "maxAmountRequired": "1",<br/>    "asset": "NP",<br/>    "payTo": "system",<br/>    "facilitatorUrl": "http://localhost:3001"<br/>  }]<br/>}
 
     Note over RA, DB: 2. Agent Processes Payment Requirements
     RA->>RA: Parse payment requirements
@@ -239,12 +239,12 @@ The following prompts can be used to test free endpoints that don't require paym
 
 #### Health Check
 ```
-Can you test the health endpoint of our Express server? It should be available at http://localhost:4021/health and return basic server information without requiring payment.
+Can you test the health endpoint of our Express server? It should be available at http://localhost:3000/health and return basic server information without requiring payment.
 ```
 
 #### Free Weather Data
 ```
-Please test our free weather endpoint at http://localhost:4021/weather. This should return weather information without requiring any NANDA Points payment.
+Please test our free weather endpoint at http://localhost:3000/weather. This should return weather information without requiring any NANDA Points payment.
 ```
 
 ### Testing Paid Resources
@@ -253,12 +253,12 @@ These prompts test endpoints that require NANDA Points payments:
 
 #### Premium Content (10 NP)
 ```
-Test the premium content endpoint at http://localhost:4021/premium/content. This requires a payment of 10 NANDA Points. You should first try without payment (expect HTTP 402), then make a proper payment using the x402 protocol.
+Test the premium content endpoint at http://localhost:3000/premium/content. This requires a payment of 10 NANDA Points. You should first try without payment (expect HTTP 402), then make a proper payment using the x402 protocol.
 ```
 
 #### Premium Analysis (10 NP)
 ```
-Test the premium analysis endpoint at http://localhost:4021/premium/analysis. This costs 10 NANDA Points and should return market analysis data. Please test both the payment failure and success scenarios.
+Test the premium analysis endpoint at http://localhost:3000/premium/analysis. This costs 10 NANDA Points and should return market analysis data. Please test both the payment failure and success scenarios.
 ```
 
 ### Testing Payment Flow

@@ -27,7 +27,7 @@ npm install
 ```bash
 MONGO_URI=mongodb://localhost:27017
 DB_NAME=nanda_points
-PORT=4022
+PORT=3001
 ```
 
 3. Start the facilitator:
@@ -58,7 +58,7 @@ Verify a payment against payment requirements.
     "scheme": "nanda-points",
     "network": "nanda-network",
     "maxAmountRequired": "1",
-    "resource": "http://localhost:4021/weather",
+    "resource": "http://localhost:3000/weather",
     "description": "Weather data access",
     "payTo": "system",
     "maxTimeoutSeconds": 60,
@@ -160,7 +160,7 @@ MONGO_URI=mongodb://localhost:27017
 DB_NAME=nanda_points
 
 # Server configuration
-PORT=4022
+PORT=3001
 HOST=localhost
 
 # Optional: Enable debug logging
@@ -171,12 +171,12 @@ DEBUG=true
 
 ### Test /supported endpoint
 ```bash
-curl http://localhost:4022/supported
+curl http://localhost:3001/supported
 ```
 
 ### Test /verify endpoint
 ```bash
-curl -X POST http://localhost:4022/verify \
+curl -X POST http://localhost:3001/verify \
   -H "Content-Type: application/json" \
   -d '{
     "payment": {

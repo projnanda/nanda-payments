@@ -41,7 +41,7 @@ app.use(
         maxTimeoutSeconds: 60,
       }
     },
-    "http://localhost:4022" // facilitator URL
+    "http://localhost:3001" // facilitator URL
   )
 );
 ```
@@ -65,7 +65,7 @@ const requirements = nandaPoints.createPaymentRequirements(
     maxTimeoutSeconds: 60
   },
   "http://localhost:3000/endpoint",
-  "http://localhost:4022"
+  "http://localhost:3001"
 );
 ```
 
@@ -76,7 +76,7 @@ Communicate with the NANDA Points facilitator:
 ```typescript
 import { createNPFacilitatorClient } from "x402-nanda-shared";
 
-const facilitator = createNPFacilitatorClient("http://localhost:4022");
+const facilitator = createNPFacilitatorClient("http://localhost:3001");
 
 // Verify payment
 const verification = await facilitator.verify(payment, requirements);

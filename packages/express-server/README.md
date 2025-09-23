@@ -13,7 +13,7 @@ This Express.js server demonstrates x402 protocol compliance using NANDA Points 
 
 - Node.js v20+
 - MongoDB running on localhost:27017 (for payment verification)
-- NANDA Points facilitator running on localhost:4022
+- NANDA Points facilitator running on localhost:3001
 
 ## Quick Start
 
@@ -25,9 +25,9 @@ npm install
 2. Set environment variables:
 ```bash
 # Copy and edit .env file
-FACILITATOR_URL=http://localhost:4022
+FACILITATOR_URL=http://localhost:3001
 ADDRESS=system  # Agent name to receive payments
-PORT=4021
+PORT=3000
 ```
 
 3. Start the server:
@@ -39,13 +39,13 @@ npm run dev
 
 ### Test HTTP 402 Response (No Payment)
 ```bash
-curl -i http://localhost:4021/weather
+curl -i http://localhost:3000/weather
 # Returns: HTTP/1.1 402 Payment Required
 ```
 
 ### Test Free Endpoint
 ```bash
-curl http://localhost:4021/health
+curl http://localhost:3000/health
 # Returns: {"status":"healthy",...}
 ```
 
@@ -58,14 +58,14 @@ curl http://localhost:4021/health
     "scheme": "nanda-points",
     "network": "nanda-network",
     "maxAmountRequired": "1",
-    "resource": "http://localhost:4021/weather",
+    "resource": "http://localhost:3000/weather",
     "description": "Access to weather data",
     "mimeType": "application/json",
     "payTo": "system",
     "maxTimeoutSeconds": 60,
     "asset": "NP",
     "extra": {
-      "facilitatorUrl": "http://localhost:4022"
+      "facilitatorUrl": "http://localhost:3001"
     }
   }]
 }
