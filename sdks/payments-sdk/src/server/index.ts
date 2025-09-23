@@ -35,22 +35,78 @@ export function requirePayment<T extends (...args: any[]) => any>(
   requirement: ToolPaymentRequirement,
   config: PaymentConfig
 ) {
+  const facilitator = createFacilitatorClient(config.facilitatorUrl);
+
   return function (originalTool: T): T {
     return (async (...args: any[]) => {
-      // This will be replaced with actual payment verification logic
-      // For now, we'll simulate the payment check
+      // Extract payment from the first argument if it contains payment context
+      const firstArg = args[0];
+      const paymentHeader = firstArg?.headers?.["x-payment"] || firstArg?.payment;
 
-      // In a real implementation, this would:
-      // 1. Check for X-PAYMENT header in the request context
-      // 2. If no payment, return HTTP 402 with payment requirements
-      // 3. If payment provided, verify with facilitator
-      // 4. If verified, call original tool and settle payment
-      // 5. Return result with payment receipt
+      if (!paymentHeader) {
+        // Return payment requirements
+        const requirements = createPaymentRequirements(
+          requirement.amount,
+          "tool://function",
+          requirement.description || "Payment required for tool execution",
+          requirement.recipient || config.agentName,
+          config.facilitatorUrl
+        );
 
-      console.log(`Payment required: ${requirement.amount} NP for tool execution`);
+        throw new NPPaymentError(
+          "Payment required",
+          "PAYMENT_REQUIRED",
+          { requirements }
+        );
+      }
 
-      // For now, call the original tool
-      return await originalTool(...args);
+      try {
+        // Decode and verify payment
+        const payment: PaymentPayload = typeof paymentHeader === 'string'
+          ? JSON.parse(atob(paymentHeader))
+          : paymentHeader;
+
+        const requirements = createPaymentRequirements(
+          requirement.amount,
+          "tool://function",
+          requirement.description || "Payment for tool execution",
+          requirement.recipient || config.agentName,
+          config.facilitatorUrl
+        );
+
+        // Verify payment
+        const verification = await facilitator.verify(payment, requirements);
+        if (!verification.isValid) {
+          throw new NPPaymentError(
+            "Payment verification failed",
+            "VERIFICATION_FAILED",
+            verification
+          );
+        }
+
+        // Execute the original tool
+        const result = await originalTool(...args);
+
+        // Settle payment after successful execution
+        try {
+          await facilitator.settle(payment, requirements);
+        } catch (settlementError) {
+          console.warn("Payment settlement failed:", settlementError);
+          // Don't fail the response for settlement issues
+        }
+
+        return result;
+
+      } catch (error) {
+        if (error instanceof NPPaymentError) {
+          throw error;
+        }
+        throw new NPPaymentError(
+          "Payment processing failed",
+          "PAYMENT_ERROR",
+          error
+        );
+      }
     }) as T;
   };
 }

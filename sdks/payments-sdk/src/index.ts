@@ -29,6 +29,9 @@ export type {
   NPTransaction,
 } from "./shared/types.js";
 
+// Import types for internal use
+import type { ToolPaymentRequirement } from "./shared/types.js";
+
 // Error classes
 export {
   NPPaymentError,
@@ -62,10 +65,13 @@ export async function quickSetup(config: { facilitatorUrl: string; agentName: st
 
   return {
     config: paymentConfig,
-    requirePayment: (requirement: any) =>
+    requirePayment: (requirement: ToolPaymentRequirement) =>
       server.requirePayment(requirement, paymentConfig),
-    createPaidTool: (name: string, requirement: any, handler: any) =>
-      server.createPaidTool(name, requirement, paymentConfig, handler),
+    createPaidTool: <T extends Record<string, any>>(
+      name: string,
+      requirement: ToolPaymentRequirement,
+      handler: (args: T, context?: any) => Promise<any>
+    ) => server.createPaidTool(name, requirement, paymentConfig, handler),
     facilitator: server.createFacilitatorClient(config.facilitatorUrl),
   };
 }
