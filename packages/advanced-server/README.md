@@ -1,40 +1,42 @@
-# x402 Advanced Resource Server Example
+# x402 Advanced NANDA Points Server
 
-This is an advanced example of an Express.js server that demonstrates how to implement paywall functionality without using middleware. This approach is useful for more complex scenarios, such as:
+This is an advanced example of an Express.js server that demonstrates manual x402 payment handling using NANDA Points instead of blockchain transactions. This approach is useful for more complex scenarios, such as:
 
 - Asynchronous payment settlement
 - Custom payment validation logic
 - Complex routing requirements
 - Integration with existing authentication systems
 
+> **💡 For new development, consider using the [@nanda/payments-sdk](../../sdks/payments-sdk/) which provides a more developer-friendly API for adding payments to Express routes and MCP tools.**
+
 ## Prerequisites
 
-- Node.js v20+ (install via [nvm](https://github.com/nvm-sh/nvm))
-- pnpm v10 (install via [pnpm.io/installation](https://pnpm.io/installation))
-- A valid Ethereum address for receiving payments
-- Coinbase Developer Platform API Key & Secret (if accepting payments on Base mainnet)
-  -- Get them here [https://portal.cdp.coinbase.com/projects](https://portal.cdp.coinbase.com/projects)
+- Node.js v20+
+- MongoDB running on localhost:27017
+- NANDA Points facilitator service running on localhost:3001
+- Valid NANDA Points agent for receiving payments
 
 ## Setup
 
-1. Copy `.env-local` to `.env` and add your Ethereum address:
+1. Set environment variables:
 
 ```bash
-cp .env-local .env
+# Agent name to receive payments
+AGENT_NAME=system
+# Facilitator service URL
+FACILITATOR_URL=http://localhost:3001
+# Server port
+PORT=3000
 ```
 
-2. Install and build all packages from the typescript examples root:
+2. Install dependencies:
 ```bash
-cd ../../
-pnpm install
-pnpm build
-cd servers/advanced
+npm install
 ```
 
-3. Run the server
+3. Start the server:
 ```bash
-pnpm install
-pnpm dev
+npm run dev
 ```
 
 ## Implementation Overview
@@ -50,22 +52,19 @@ This advanced implementation provides a structured approach to handling payments
 
 ## Testing the Server
 
-You can test the server using one of the example clients:
+You can test the server using curl or any x402-compatible client:
 
-### Using the Fetch Client
+### Test HTTP 402 Response
 ```bash
-cd ../../clients/fetch
-# Ensure .env is setup
-pnpm install
-pnpm dev
+curl -i http://localhost:3000/weather
+# Should return HTTP 402 with NANDA Points payment requirements
 ```
 
-### Using the Axios Client
+### Test with Payment
 ```bash
-cd ../../clients/axios
-# Ensure .env is setup
-pnpm install
-pnpm dev
+# First get payment requirements, then create payment via NANDA Points system
+# and include in X-PAYMENT header
+curl -H "X-PAYMENT: <base64-encoded-payment>" http://localhost:3000/weather
 ```
 
 ## Example Endpoints
@@ -99,19 +98,18 @@ The server includes example endpoints that demonstrate different payment scenari
   "error": "X-PAYMENT header is required",
   "accepts": [
     {
-      "scheme": "exact",
-      "network": "base-sepolia",
-      "maxAmountRequired": "1000",
-      "resource": "http://localhost:3001/weather",
+      "scheme": "nanda-points",
+      "network": "nanda-network",
+      "maxAmountRequired": "1",
+      "resource": "http://localhost:3000/weather",
       "description": "Access to weather data",
-      "mimeType": "",
-      "payTo": "0xYourAddress",
+      "mimeType": "application/json",
+      "payTo": "system",
       "maxTimeoutSeconds": 60,
-      "asset": "0x...",
+      "asset": "NP",
       "outputSchema": null,
       "extra": {
-        "name": "USD Coin",
-        "version": "1"
+        "facilitatorUrl": "http://localhost:3001"
       }
     }
   ]

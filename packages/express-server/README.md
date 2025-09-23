@@ -2,6 +2,8 @@
 
 This Express.js server demonstrates x402 protocol compliance using NANDA Points instead of blockchain payments. It's forked from Coinbase's x402 Express server example and adapted for MongoDB/NP settlement.
 
+> **💡 For new development, consider using the [@nanda/payments-sdk](../../sdks/payments-sdk/) which provides a more developer-friendly API for adding payments to Express routes.**
+
 ## Features
 
 - **x402 Protocol Compliance**: Returns proper HTTP 402 responses with payment requirements

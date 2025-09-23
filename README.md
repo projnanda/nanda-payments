@@ -68,7 +68,49 @@ Your x402-compliant server will be running at:
 # Or use any other x402-compatible client
 ```
 
+## SDK Quick Start (Recommended)
+
+For new MCP server development, use the NANDA Payments SDK:
+
+```bash
+npm install @nanda/payments-sdk
+```
+
+```typescript
+import { quickSetup } from '@nanda/payments-sdk';
+
+// 1. Setup payments for your MCP server
+const payments = await quickSetup({
+  facilitatorUrl: 'http://localhost:3001',
+  agentName: 'my-mcp-server'
+});
+
+// 2. Convert free tool to paid tool
+const freeWeatherTool = (args) => getBasicWeather(args.location);
+const paidWeatherTool = payments.requirePayment({
+  amount: 50, // 50 NANDA Points
+  description: 'Premium weather data'
+})(freeWeatherTool);
+
+// 3. Create new paid tool
+const analyticsTool = payments.createPaidTool(
+  'analytics',
+  { amount: 100, description: 'Data analytics' },
+  async (args) => getAnalytics(args.dataset)
+);
+```
+
+See the [SDK Documentation](./sdks/payments-sdk/) for complete usage guide.
+
 ## Packages
+
+### [NANDA Payments SDK](./sdks/payments-sdk/) ⭐ **NEW**
+**TypeScript SDK for MCP tool monetization**
+- `@nanda/payments-sdk` - The primary way to add payments to MCP servers
+- `requirePayment()` decorator for converting free tools to paid tools
+- `quickSetup()` for 3-line MCP server configuration
+- Express middleware for route-level payment protection
+- Full TypeScript support with comprehensive type definitions
 
 ### [Express Server](./packages/express-server/)
 **Production-ready server with middleware**
