@@ -258,13 +258,11 @@ async function settlePayment(
       };
     }
 
-    // This would integrate with your existing NP transaction system
-    // For now, we'll simulate the transaction process
+    // Execute actual NP transaction with MongoDB balance updates
     const paymentAmount = npUtils.parseAmount(payment.amount);
 
-    // TODO: Replace with actual NP transaction system integration
-    // This should call your existing initiateTransaction logic
-    const receipt = await simulateNPTransaction(
+    // Execute real NP transaction with MongoDB
+    const receipt = await executeNPTransaction(
       payment.from,
       payment.payTo,
       paymentAmount,
@@ -286,29 +284,76 @@ async function settlePayment(
 }
 
 /**
- * Simulate NP transaction (replace with actual implementation)
+ * Execute real NP transaction using MongoDB
+ * Based on the working implementation from main branch
  */
-async function simulateNPTransaction(
+async function executeNPTransaction(
   from: string,
   to: string,
   amount: number,
   txId: string
 ) {
-  // TODO: Replace with your actual NP transaction logic
-  // This should integrate with your existing transaction/receipt system
+  const createdAt = new Date().toISOString();
 
-  const receipt = {
+  // Get collection references
+  const walletCollection = database.collection("wallets");
+  const transactionCollection = database.collection("transactions");
+  const receiptCollection = database.collection("receipts");
+
+  // 1. Ensure both wallets exist and check balance
+  const fromWallet = await walletCollection.findOne({ agent_name: from });
+  const toWallet = await walletCollection.findOne({ agent_name: to });
+
+  if (!fromWallet) throw new Error(`Sender wallet not found: ${from}`);
+  if (!toWallet) throw new Error(`Receiver wallet not found: ${to}`);
+  if (fromWallet.balanceMinor < amount) throw new Error(`Insufficient funds: ${fromWallet.balanceMinor} < ${amount}`);
+
+  // 2. Deduct from sender's wallet
+  const updatedFromWallet = await walletCollection.findOneAndUpdate(
+    { agent_name: from },
+    { $inc: { balanceMinor: -amount }, $set: { updatedAt: createdAt } },
+    { returnDocument: "after" }
+  );
+  if (!updatedFromWallet) throw new Error("Failed to update sender wallet");
+
+  // 3. Add to receiver's wallet
+  const updatedToWallet = await walletCollection.findOneAndUpdate(
+    { agent_name: to },
+    { $inc: { balanceMinor: amount }, $set: { updatedAt: createdAt } },
+    { returnDocument: "after" }
+  );
+  if (!updatedToWallet) throw new Error("Failed to update receiver wallet");
+
+  // 4. Record transaction
+  const transaction = {
     txId,
     fromAgent: from,
     toAgent: to,
     amountMinor: amount,
-    amountPoints: amount,
-    timestamp: new Date().toISOString(),
-    fromBalanceAfter: 0, // Would be calculated from actual balances
-    toBalanceAfter: 0,   // Would be calculated from actual balances
+    currency: "NP",
+    scale: 0,
+    createdAt,
+    status: "completed",
+    error: null,
+    task: "x402-payment",
   };
+  await transactionCollection.insertOne(transaction);
 
-  console.log(`Simulated NP transaction: ${from} → ${to}, ${amount} NP`);
+  // 5. Create receipt
+  const receipt = {
+    txId,
+    issuedAt: createdAt,
+    fromAgent: from,
+    toAgent: to,
+    amountMinor: amount,
+    fromBalanceAfter: updatedFromWallet.balanceMinor,
+    toBalanceAfter: updatedToWallet.balanceMinor,
+  };
+  await receiptCollection.insertOne(receipt);
+
+  console.log(`✅ Real NP transaction completed: ${from} → ${to}, ${amount} NP`);
+  console.log(`   Balances: ${from}=${updatedFromWallet.balanceMinor}, ${to}=${updatedToWallet.balanceMinor}`);
+
   return receipt;
 }
 
