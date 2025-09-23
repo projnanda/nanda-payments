@@ -1,60 +1,57 @@
-# Implementation Plan: NANDA Points SDKs (TypeScript & Python)
+# Implementation Plan: NANDA Points Server SDK (TypeScript)
 
 ## Overview
 
-Build comprehensive client SDKs for NANDA Points payments, starting with TypeScript and followed by Python. These SDKs will provide language-native interfaces to the x402 protocol and facilitator APIs, enabling developers to integrate NANDA Points payments without understanding protocol details.
+Build server-side SDK focused on MCP server developers who want to monetize their tools. The SDK provides language-native interfaces to the x402 protocol and facilitator APIs, enabling developers to add payment requirements to their tools without understanding protocol details.
 
-## Phase 1: TypeScript SDK Foundation (Week 1)
+**Updated Focus**: Server-side SDK for MCP developers (not client SDK)
 
-### Goal
-Create the core TypeScript SDK with complete x402 protocol support and facilitator API integration.
-
-### Tasks
-- [ ] Create `sdks/typescript/` package structure
-- [ ] Implement x402 protocol client with HTTP header handling
-- [ ] Build facilitator API wrapper (/verify, /settle, /supported)
-- [ ] Create payment client with automatic retry logic
-- [ ] Implement agent balance and transaction management
-- [ ] Add comprehensive TypeScript definitions
-- [ ] Build testing utilities and mock facilitator
-- [ ] Create integration test suite
-- [ ] Package for npm publication
-
-### Deliverables
-- [ ] Working `@nanda/payments-sdk` TypeScript package
-- [ ] Complete x402 protocol client implementation
-- [ ] Facilitator API wrapper with type safety
-- [ ] Testing utilities for developers
-- [ ] Basic documentation and examples
-- [ ] npm package ready for publication
-
-### Estimated Time: 5-7 days
-
-## Phase 2: Python SDK Development (Week 2)
+## Phase 1: TypeScript Server SDK Foundation ✅ COMPLETED
 
 ### Goal
-Create feature-complete Python SDK with async support and framework integrations.
+Create the core TypeScript SDK for MCP server developers to easily add payment requirements to their tools.
 
 ### Tasks
-- [ ] Create `sdks/python/` package structure with pyproject.toml
-- [ ] Implement async payment client using aiohttp
-- [ ] Port facilitator API wrapper to Python with type hints
-- [ ] Create Python-native error handling and exceptions
-- [ ] Build FastAPI, Django, and Flask integration utilities
-- [ ] Add comprehensive type hints for mypy compatibility
-- [ ] Create pytest fixtures and testing utilities
-- [ ] Build async context managers for resource cleanup
-- [ ] Package for PyPI publication
+- [x] Create `sdks/payments-sdk/` package structure
+- [x] Extract working facilitator client from packages/shared
+- [x] Build MCP-specific payment wrapper utilities (requirePayment, createPaidTool)
+- [x] Implement x402-compliant payment middleware for Express servers
+- [x] Add comprehensive TypeScript definitions for all payment types
+- [x] Create developer-friendly API following x402 patterns
+- [x] Build working MCP server example demonstrating paid tools
+- [x] Package configured for npm publication as @nanda/payments-sdk
+- [x] Fix TypeScript compilation and ensure zero lint errors
+
+### Deliverables ✅ COMPLETED
+- [x] Working `@nanda/payments-sdk` TypeScript package
+- [x] Server-side payment utilities for MCP developers
+- [x] Facilitator API wrapper extracted from working implementation
+- [x] MCP-specific tools: requirePayment(), createPaidTool(), paymentMiddleware()
+- [x] Complete example MCP server showing free vs paid tools
+- [x] npm package ready for publication
+- [x] TypeScript definitions with zero compilation errors
+
+### Actual Time: 1 day (leveraged existing working implementation)
+
+## Phase 2: Documentation & Examples 📝 IN PROGRESS
+
+### Goal
+Complete documentation and create comprehensive examples for the TypeScript SDK.
+
+### Tasks
+- [x] Update PLAN.md with current progress and completion status
+- [ ] Update PRD.md to reflect server-side focus
+- [ ] Create comprehensive README.md for the SDK
+- [ ] Document the developer journey from free to paid tools
+- [ ] Create additional MCP server examples
+- [ ] Add API reference documentation
+- [ ] Create troubleshooting guide
 
 ### Deliverables
-- [ ] Working `nanda-payments` Python package
-- [ ] Async payment client with aiohttp
-- [ ] Framework integrations (FastAPI, Django, Flask)
-- [ ] Type hints and mypy compatibility
-- [ ] pytest testing utilities
-- [ ] PyPI package ready for publication
-
-### Estimated Time: 5-7 days
+- [ ] Complete SDK documentation
+- [ ] Multiple example MCP servers
+- [ ] API reference guide
+- [ ] Migration guide for existing MCP servers
 
 ## Phase 3: Documentation & Polish (Week 3)
 

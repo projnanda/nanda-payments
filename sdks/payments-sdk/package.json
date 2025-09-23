@@ -1,0 +1,72 @@
+{
+  "name": "@nanda/payments-sdk",
+  "version": "1.0.0",
+  "description": "NANDA Points payments SDK for x402-compliant servers and clients",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./server": {
+      "import": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client/index.js",
+      "types": "./dist/client/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/server/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts src/server/index.ts --format esm --dts --watch",
+    "test": "node --test dist/**/*.test.js",
+    "lint": "eslint . --ext .ts --fix",
+    "lint:check": "eslint . --ext .ts",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "express": "^4.19.0",
+    "mongodb": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^20.0.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.3.0"
+  },
+  "optionalDependencies": {
+    "@modelcontextprotocol/sdk": "*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/projnanda/x402-nanda-points.git",
+    "directory": "sdks/payments-sdk"
+  },
+  "keywords": [
+    "nanda-points",
+    "x402",
+    "payments",
+    "sdk",
+    "typescript",
+    "mcp",
+    "server",
+    "monetization"
+  ],
+  "author": "NANDA Project",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

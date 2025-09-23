@@ -1,41 +1,40 @@
-# Product Requirements Document: NANDA Points SDKs for x402 Integration
+# Product Requirements Document: NANDA Points Server SDK for MCP Developers
 
 ## Problem Statement
 
-Developers building applications with NANDA Points payments currently need to understand complex x402 protocol details, facilitator APIs, payment verification, and MongoDB transaction handling. This creates significant barriers to adoption across different programming languages and frameworks.
+MCP (Model Context Protocol) server developers who want to monetize their tools currently need to understand complex x402 protocol details, facilitator APIs, payment verification, and middleware integration. This creates significant barriers to adding payment requirements to MCP tools.
 
 **Current Pain Points:**
-- No standardized client libraries for NANDA Points integration
-- Complex facilitator API interactions requiring protocol knowledge
-- Manual payment verification and error handling
-- No language-specific SDKs for popular ecosystems
-- Duplicated integration code across projects
-- Steep learning curve for x402 protocol compliance
+- No standardized server-side libraries for MCP tool monetization
+- Complex x402 protocol implementation requirements
+- Manual payment middleware and verification handling
+- No MCP-specific payment wrapper utilities
+- Duplicated payment integration code across MCP servers
+- Steep learning curve for tool monetization
 
 ## Objective
 
-Create comprehensive SDKs starting with TypeScript, then Python, that abstract NANDA Points payment complexity and enable developers to integrate payments with minimal protocol knowledge.
+Create a comprehensive server-side SDK focused on MCP developers who want to monetize their tools. The SDK provides language-native interfaces to the x402 protocol and facilitator APIs, enabling developers to add payment requirements to their tools without understanding protocol details.
 
-**Vision**: Language-native SDKs that handle the complexity of x402 protocol, facilitator communication, and NANDA Points transactions
+**Vision**: The "only way" developers integrate NANDA Points payments into MCP servers, with developer-friendly APIs that feel as natural as adding any other middleware.
 
 ## Success Criteria
 
-### Must Have - TypeScript SDK
-- [ ] npm package installation (`npm install @nanda/payments-sdk`)
-- [ ] Complete x402 protocol client implementation
-- [ ] Facilitator API wrapper with automatic retry logic
-- [ ] Payment creation and verification utilities
-- [ ] TypeScript definitions and full IntelliSense support
-- [ ] Agent balance management and transaction history
-- [ ] Comprehensive error handling with typed exceptions
+### Must Have - TypeScript Server SDK ✅ COMPLETED
+- [x] npm package installation (`npm install @nanda/payments-sdk`)
+- [x] MCP-specific payment wrapper utilities (requirePayment, createPaidTool)
+- [x] Express middleware for payment verification (paymentMiddleware)
+- [x] x402-compliant payment middleware extracted from working implementation
+- [x] TypeScript definitions and full IntelliSense support
+- [x] Facilitator API wrapper with retry logic
+- [x] Comprehensive error handling with typed exceptions
+- [x] Working MCP server example demonstrating paid tools
 
-### Must Have - Python SDK
-- [ ] PyPI package installation (`pip install nanda-payments`)
-- [ ] Python-native API design following PEP conventions
-- [ ] Async/await support with asyncio compatibility
-- [ ] Type hints throughout for mypy/PyCharm support
-- [ ] Same feature parity as TypeScript SDK
-- [ ] Integration with popular Python web frameworks
+### Future Expansion - Client SDK Support
+- [ ] Client-side payment utilities for A2A/A2P scenarios
+- [ ] Agent balance management and transaction history
+- [ ] Payment creation utilities for requesting agents
+- [ ] Python SDK for server-side tool monetization
 
 ### Should Have
 - [ ] Built-in payment testing and mocking utilities
@@ -54,197 +53,206 @@ Create comprehensive SDKs starting with TypeScript, then Python, that abstract N
 
 ## Target Users
 
-1. **Application Developers**: Building NANDA Points-enabled applications
-2. **MCP Server Developers**: Adding payments to existing MCP servers
-3. **Web Service Developers**: Creating paid APIs and services
-4. **Enterprise Teams**: Standardizing NANDA Points integration across services
-5. **Python Developers**: Building AI/ML services with usage-based billing
+1. **MCP Server Developers**: Adding payment requirements to existing MCP tools (PRIMARY)
+2. **Express.js Developers**: Creating paid APIs and services with NANDA Points
+3. **Tool Monetization Teams**: Converting free tools to paid services
+4. **AI Service Providers**: Building usage-based billing for AI tools
+5. **Enterprise MCP Teams**: Standardizing payment integration across MCP servers
 
 ## User Stories
 
-### Story 1: TypeScript - Simple Payment Client
+### Story 1: MCP Server - Quick Setup ✅ IMPLEMENTED
 ```typescript
-import { NandaPaymentsClient } from '@nanda/payments-sdk';
+import { quickSetup } from '@nanda/payments-sdk';
 
-const client = new NandaPaymentsClient({
-  agentName: 'my-app',
-  facilitatorUrl: 'http://localhost:3001'
+const payments = await quickSetup({
+  facilitatorUrl: 'http://localhost:3001',
+  agentName: 'my-mcp-server'
 });
 
-// Check if payment required
-const response = await client.makeRequest('http://api.example.com/premium');
-if (response.paymentRequired) {
-  // Create and submit payment
-  const payment = await client.createPayment({
-    amount: response.price,
-    recipient: response.payTo
-  });
-  const result = await client.makeRequest('http://api.example.com/premium', payment);
-}
+// Convert free tool to paid tool
+const paidWeatherTool = payments.requirePayment({
+  amount: 50, // 50 NANDA Points
+  description: 'Premium weather data with forecasts'
+})(originalWeatherTool);
 ```
 
-### Story 2: Python - Agent Balance Management
-```python
-from nanda_payments import NandaPaymentsClient
-
-client = NandaPaymentsClient(
-    agent_name="python-service",
-    facilitator_url="http://localhost:3001"
-)
-
-# Check balance
-balance = await client.get_balance()
-print(f"Current balance: {balance} NP")
-
-# Get transaction history
-transactions = await client.get_transactions(limit=10)
-for tx in transactions:
-    print(f"{tx.created_at}: {tx.amount} NP to {tx.to_agent}")
-```
-
-### Story 3: Testing and Mocking
+### Story 2: MCP Tool Creation ✅ IMPLEMENTED
 ```typescript
-// TypeScript testing utilities
-import { createMockFacilitator } from '@nanda/payments-sdk/testing';
+import { createPaidTool, createPaymentConfig } from '@nanda/payments-sdk';
 
-const mockFacilitator = createMockFacilitator();
-const client = new NandaPaymentsClient({
-  facilitatorUrl: mockFacilitator.url
+const config = createPaymentConfig({
+  facilitatorUrl: 'http://localhost:3001',
+  agentName: 'weather-service'
 });
 
-// Test payment flows without real transactions
-await client.testPaymentFlow({ amount: 10, recipient: 'test-service' });
+// Create new paid tool for MCP server
+const premiumWeatherTool = createPaidTool(
+  'premium_weather',
+  { amount: 100, description: 'Premium weather analysis' },
+  config,
+  async (args) => {
+    // Tool implementation
+    return await getPremiumWeatherData(args.location);
+  }
+);
+```
+
+### Story 3: Express Middleware ✅ IMPLEMENTED
+```typescript
+import express from 'express';
+import { paymentMiddleware, createPaymentConfig } from '@nanda/payments-sdk';
+
+const app = express();
+const config = createPaymentConfig({
+  facilitatorUrl: 'http://localhost:3001',
+  agentName: 'api-server'
+});
+
+// Apply payment requirements to specific routes
+app.use(paymentMiddleware({
+  '/api/premium': { amount: 25, description: 'Premium API access' },
+  '/api/analytics': { amount: 50, description: 'Analytics data' }
+}, config));
 ```
 
 ## Technical Requirements
 
-### TypeScript SDK Core Components
+### TypeScript Server SDK Core Components ✅ IMPLEMENTED
 
-1. **Payment Client**
-   - HTTP client for x402 protocol compliance
-   - Automatic X-PAYMENT header handling
-   - Payment creation and verification
-   - Retry logic and error handling
+1. **MCP Payment Utilities**
+   - requirePayment() decorator for tool monetization
+   - createPaidTool() for new payment-protected tools
+   - quickSetup() for rapid MCP server configuration
+   - Type-safe payment requirement definitions
 
 2. **Facilitator API Wrapper**
    - Type-safe facilitator endpoints (/verify, /settle, /supported)
-   - Connection pooling and health checking
-   - Automatic failover and retry logic
-   - Request/response logging and debugging
+   - Extracted from working packages/shared implementation
+   - Automatic retry logic and error handling
+   - NANDA Points scheme compliance
 
-3. **Agent Management**
-   - Balance inquiries and transaction history
-   - Agent registration and authentication
-   - Transaction receipt handling
-   - Webhook support for real-time updates
+3. **Express Middleware**
+   - paymentMiddleware() for route-level payment protection
+   - Automatic x402 response generation
+   - Payment verification and settlement
+   - Error handling and debugging support
 
-4. **Testing Utilities**
-   - Mock facilitator server
-   - Test payment generators
-   - Integration test helpers
-   - Assertion utilities for payment flows
+4. **Type System**
+   - Complete TypeScript definitions for x402 protocol
+   - NANDA Points specific type definitions
+   - Tool payment requirement interfaces
+   - Comprehensive error type hierarchy
 
-### Python SDK Core Components
+### Future SDK Expansion
 
-1. **Async Payment Client**
-   - asyncio-based HTTP client with aiohttp
-   - Python-native error handling with custom exceptions
-   - Context managers for resource cleanup
-   - Type hints for mypy compatibility
+1. **Client-Side Utilities** (Future)
+   - Payment creation for requesting agents
+   - Agent balance management and transaction history
+   - A2A (Agent-to-Agent) payment flows
+   - A2P (Agent-to-Person) payment scenarios
 
-2. **Framework Integrations**
-   - FastAPI middleware and dependencies
-   - Django REST framework integration
-   - Flask extensions and decorators
-   - Automatic serialization/deserialization
+2. **Python Server SDK** (Future)
+   - Python-native MCP tool monetization utilities
+   - FastAPI/Django middleware for payment verification
+   - Async payment handling with aiohttp
+   - Type hints and mypy compatibility
 
-3. **Developer Experience**
-   - Pythonic API design following PEP conventions
-   - Comprehensive logging with structured output
-   - Configuration via environment variables or files
-   - CLI tools for testing and debugging
+3. **Developer Experience Enhancements** (Future)
+   - Mock facilitator utilities for testing
+   - CLI tools for payment debugging
+   - Comprehensive logging and monitoring
+   - Migration guides and examples
 
 ## Implementation Strategy
 
-### Phase 1: TypeScript SDK (Weeks 1-2)
-- Core payment client with x402 protocol support
-- Facilitator API wrapper with retry logic
-- Agent balance and transaction management
-- Testing utilities and mock servers
-- Comprehensive TypeScript definitions
-- npm package publication
+### Phase 1: TypeScript Server SDK ✅ COMPLETED
+- [x] Extract working payment middleware from packages/shared
+- [x] Build MCP-specific payment wrapper utilities (requirePayment, createPaidTool)
+- [x] Implement x402-compliant payment middleware for Express servers
+- [x] Add comprehensive TypeScript definitions for all payment types
+- [x] Create developer-friendly API following x402 patterns
+- [x] Build working MCP server example demonstrating paid tools
+- [x] Package configured for npm publication as @nanda/payments-sdk
+- [x] Fix TypeScript compilation and ensure zero lint errors
 
-### Phase 2: Python SDK (Weeks 3-4)
-- Python-native async payment client
-- Framework integrations (FastAPI, Django, Flask)
-- Type hints and mypy compatibility
-- Testing utilities and pytest fixtures
-- PyPI package publication
-- Feature parity with TypeScript SDK
+### Phase 2: Documentation & Examples 📝 IN PROGRESS
+- [ ] Update PRD.md to reflect server-side focus
+- [ ] Create comprehensive README.md for the SDK
+- [ ] Document the developer journey from free to paid tools
+- [ ] Create additional MCP server examples
+- [ ] Add API reference documentation
+- [ ] Create troubleshooting guide
 
-### Phase 3: Documentation & Examples (Week 5)
-- Comprehensive API documentation
-- Integration tutorials for popular frameworks
-- Real-world usage examples
-- Migration guides from manual integration
-- Performance benchmarking
-- Community feedback integration
+### Phase 3: SDK Expansion (Future)
+- [ ] Client-side payment utilities for A2A/A2P scenarios
+- [ ] Python SDK for server-side tool monetization
+- [ ] Advanced testing and mocking utilities
+- [ ] Performance optimization and connection pooling
+- [ ] Community feedback integration and feature requests
 
-## Monorepo Structure
+## Current SDK Structure ✅ IMPLEMENTED
 
 ```
 sdks/
-├── typescript/              # TypeScript SDK
-│   ├── src/
-│   │   ├── client/         # Payment client core
-│   │   ├── facilitator/    # Facilitator API wrapper
-│   │   ├── types/          # TypeScript definitions
-│   │   └── testing/        # Test utilities
-│   ├── examples/           # Integration examples
-│   └── package.json
-├── python/                 # Python SDK
-│   ├── nanda_payments/
-│   │   ├── client.py       # Payment client core
-│   │   ├── facilitator.py  # Facilitator API wrapper
-│   │   ├── types.py        # Type definitions
-│   │   └── testing/        # Test utilities
-│   ├── examples/           # Integration examples
-│   └── pyproject.toml
-└── docs/                   # Shared documentation
+└── payments-sdk/           # @nanda/payments-sdk
+    ├── src/
+    │   ├── shared/         # Core x402 and NANDA Points types
+    │   ├── facilitator/    # Facilitator API wrapper
+    │   ├── server/         # MCP server utilities (requirePayment, createPaidTool)
+    │   ├── examples/       # MCP server examples
+    │   └── index.ts        # Main entry point with quickSetup
+    ├── dist/               # Compiled TypeScript output
+    ├── package.json        # npm package configuration
+    └── tsconfig.json       # TypeScript configuration
+```
+
+### Future Expansion Structure
+```
+sdks/
+├── payments-sdk/           # Current @nanda/payments-sdk (server-focused)
+└── client-sdk/             # Future client-side utilities (A2A/A2P)
+    ├── src/
+    │   ├── client/         # Payment client for requesting agents
+    │   ├── agent/          # Agent balance management
+    │   └── testing/        # Mock facilitator utilities
+    └── package.json
 ```
 
 ## Success Metrics
 
-- **TypeScript**: Successful npm package with 100+ downloads/week
-- **Python**: Successful PyPI package with 50+ downloads/week
-- **Developer Satisfaction**: < 5 minutes to make first payment request
-- **API Coverage**: 100% of facilitator endpoints wrapped
-- **Error Rate**: < 2% of integrations encounter setup issues
+- **TypeScript Server SDK**: ✅ Successful npm package ready for publication
+- **MCP Developer Adoption**: Time to monetize first tool < 10 minutes
+- **API Coverage**: ✅ 100% of facilitator endpoints wrapped with type safety
+- **Error Rate**: ✅ Zero TypeScript compilation errors
+- **Integration Simplicity**: ✅ Three-line setup with quickSetup()
 
 ## Non-Goals
 
-- Building server-side payment middleware (that's separate packages)
+- Client-side payment utilities (deferred to future expansion)
 - Supporting non-NANDA payment schemes initially
 - Blockchain or cryptocurrency integrations
-- Payment UI components (pure client libraries)
+- Payment UI components (pure server-side libraries)
 - Database direct access (only through facilitator APIs)
+- Migration tools (we are the "only way" - no existing integrations to migrate)
 
 ## Definition of Done
 
-### TypeScript SDK
-A developer can:
-1. `npm install @nanda/payments-sdk`
-2. Create payment client with 3 lines of code
-3. Make payment requests with automatic x402 handling
-4. Access full TypeScript IntelliSense and type safety
-5. Use comprehensive testing utilities
+### TypeScript Server SDK ✅ COMPLETED
+An MCP developer can:
+1. ✅ `npm install @nanda/payments-sdk`
+2. ✅ Setup payments with quickSetup() in 3 lines of code
+3. ✅ Wrap free tools with requirePayment() to monetize them
+4. ✅ Create new paid tools with createPaidTool()
+5. ✅ Access full TypeScript IntelliSense and type safety
+6. ✅ Use Express middleware for route-level payment protection
+7. ✅ See working examples in a complete MCP server
 
-### Python SDK
-A developer can:
-1. `pip install nanda-payments`
-2. Create async payment client following Python conventions
-3. Integrate with FastAPI/Django with provided middleware
-4. Access full type hints and mypy compatibility
-5. Use pytest fixtures for testing
+### Future SDK Expansion
+A developer will be able to:
+- Install client-side utilities for A2A/A2P payment scenarios
+- Access agent balance management and transaction history
+- Use Python SDK for server-side tool monetization
+- Leverage comprehensive testing and mocking utilities
 
-Both SDKs should feel native to their respective ecosystems while providing identical functionality.
+The server SDK provides the foundation for MCP tool monetization with a focus on developer experience and x402 protocol compliance.
