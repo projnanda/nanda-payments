@@ -6,3 +6,6 @@ dist
 # Cursor IDE configuration (contains personal/temporary URLs)
 .cursor/
 .vscode/
+
+# Claude development notes (personal/local only)
+CLAUDE.md
