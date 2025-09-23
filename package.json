@@ -1,33 +1,52 @@
 {
-  "name": "nanda-points-mcp-server",
-  "version": "0.2.0",
+  "name": "x402-nanda-points",
+  "version": "1.0.0",
+  "description": "x402-compliant server infrastructure using NANDA Points instead of blockchain settlement",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "tsx src/mcp/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/combined-server.js",
-    "seed": "tsx seed.js",
-    "mcp:server": "tsx src/mcp/server.ts",
-    "test:x402": "tsx tests/x402-np.test.ts",
-    "test:x402-simple": "tsx tests/x402-simple.test.ts",
-    "test:x402-full": "tsx run-comprehensive-test.ts",
-    "api:server": "tsx src/api/server.ts",
-    "combined:server": "tsx src/combined-server.ts"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.18.0",
-    "mongodb": "^6.8.0",
-    "dotenv": "^16.4.5",
-    "zod": "^3.23.8",
-    "express": "^4.19.2",
-    "cors": "^2.8.5"
+    "dev": "npm run dev --workspace=express-server",
+    "dev:express": "npm run dev --workspace=express-server",
+    "dev:advanced": "npm run dev --workspace=advanced-server",
+    "dev:facilitator": "npm run dev --workspace=facilitator",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:check": "npm run lint:check --workspaces",
+    "format": "npm run format --workspaces",
+    "format:check": "npm run format:check --workspaces",
+    "seed": "node seed.js",
+    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist"
   },
   "devDependencies": {
-    "@types/node": "^24.5.1",
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "tsx": "^4.19.0",
-    "typescript": "^5.5.4"
-  }
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsdoc": "^50.6.9",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "3.5.2",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/projnanda/x402-nanda-points.git"
+  },
+  "keywords": [
+    "x402",
+    "payments",
+    "nanda-points",
+    "mcp",
+    "http-402",
+    "blockchain-alternative"
+  ],
+  "author": "NANDA Project",
+  "license": "MIT"
 }

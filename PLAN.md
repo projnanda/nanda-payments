@@ -26,29 +26,38 @@ Complete rebuild implementation plan for x402-compliant **server-side infrastruc
 
 **Estimated Time**: 1-2 days
 
-## Phase 2: Core Implementation
-**Goal**: Implement NP payment scheme and facilitator logic
+## Phase 2: Core Implementation (REVISED)
+**Goal**: Fork and adapt existing x402 server implementations
 
 ### Tasks
-- [ ] Delete all existing implementation files
-- [ ] Create new monorepo structure from scratch
-- [ ] Create "nanda-points" payment scheme module
-- [ ] Implement NP payment verification logic
-- [ ] Replace blockchain settlement with MongoDB transactions
-- [ ] Add facilitator endpoints (/verify, /settle, /supported)
-- [ ] Integrate with MongoDB (retain data, new schema if needed)
-- [ ] Update payment requirements format for NP
-- [ ] Create Resource Server SDK package
-- [ ] Implement facilitator URL inclusion in HTTP 402 responses
-- [ ] Ensure Streamable HTTP transport throughout
+- [x] Copy x402 Express server example to our repo
+- [x] Copy x402 Advanced server example to our repo
+- [x] Create proper monorepo structure with npm workspaces
+- [x] Analyze x402 package dependencies and facilitator interface
+
+## Key Dependencies to Replace:
+- **x402-express**: Middleware package with `paymentMiddleware` function
+- **x402**: Core package with schemes, types, verification, facilitator clients
+- **Schemes**: `exact.evm.decodePayment()` → NP scheme decoder
+- **Facilitator**: `useFacilitator()` → NP facilitator client
+- **Verification**: Blockchain verification → MongoDB/NP verification
+- [x] Create "nanda-points" payment scheme module (replace EVM schemes)
+- [x] Implement NP payment verification (replace blockchain verification)
+- [x] Replace facilitator blockchain calls with MongoDB transactions
+- [x] Create shared package with types and utilities
+- [x] Implement NP facilitator API (/verify, /settle, /supported)
+- [x] Adapt payment middleware for MCP Streamable HTTP transport
+- [x] Update payment requirements to include NP-specific fields
+- [x] Test HTTP 402 responses work with existing x402 clients
+- [x] Integrate with existing MongoDB/NP transaction system
 
 **Deliverables**:
-- Complete monorepo structure
-- Working NP payment scheme
-- Facilitator API implementation
-- Resource Server SDK
-- MongoDB integration with new schema
-- Base README with organization and quick start
+- [x] Complete monorepo structure
+- [x] Base README with organization and quick start
+- [x] Working NP payment scheme
+- [x] Facilitator API implementation
+- [x] Adapted x402 servers for NP settlement
+- [x] MongoDB integration with existing schema
 
 **Estimated Time**: 3-4 days
 
@@ -92,7 +101,12 @@ Complete rebuild implementation plan for x402-compliant **server-side infrastruc
 **Goal**: Complete documentation and remove legacy code
 
 ### Tasks
-- [ ] Write new README.md from scratch
+- [x] Write new README.md from scratch
+- [ ] Create missing documentation files referenced in README.md:
+  - [ ] Facilitator API documentation
+  - [ ] MCP Server SDK documentation
+  - [ ] Payment Protocol documentation
+  - [ ] Examples documentation
 - [ ] Document NP payment scheme specification
 - [ ] Create API documentation for facilitator endpoints
 - [ ] Add usage examples and integration guide
@@ -119,8 +133,25 @@ Complete rebuild implementation plan for x402-compliant **server-side infrastruc
 - [x] Designed monorepo structure
 - [x] Created base README with architecture and quick start
 
-### 🚧 Phase 2: Core Implementation - STARTING
-- [ ] **Next**: Delete existing implementation files and create monorepo structure
+### ✅ Phase 2: Core Implementation - COMPLETE
+- [x] **MAJOR DISCOVERY**: Found working x402 server implementations at `/examples/typescript/servers/`
+- [x] Fork and adapt existing x402 Express server instead of building from scratch
+- [x] Copy x402 Express server example to our repo
+- [x] Copy x402 Advanced server example to our repo
+- [x] Create proper monorepo structure with npm workspaces
+- [x] Analyze x402 package dependencies and facilitator interface
+- [x] Create "nanda-points" payment scheme module (replace EVM schemes)
+- [x] Implement NP payment verification (replace blockchain verification)
+- [x] Replace facilitator blockchain calls with MongoDB transactions
+- [x] Create shared package with types and utilities
+- [x] Implement NP facilitator API (/verify, /settle, /supported)
+- [x] Adapt Express server to use NANDA Points instead of x402 packages
+
+## What We Found
+- **Express Server**: Complete working implementation with `paymentMiddleware`
+- **Advanced Server**: Manual payment verification with async settlement
+- **Proven Architecture**: Real HTTP 402 responses, X-PAYMENT headers, facilitator integration
+- **Working Code**: Just need to replace blockchain/USDC with MongoDB/NP
 
 ## HTTP 402 Response Format (from x402 spec)
 ```json

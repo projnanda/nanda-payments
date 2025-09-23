@@ -24,20 +24,20 @@ Build the **server-side infrastructure** for x402-compliant payment systems that
 ## Success Criteria
 
 ### Must Have
-- [ ] HTTP 402 "Payment Required" status codes
-- [ ] X-PAYMENT header support for payment payloads
-- [ ] X-PAYMENT-RESPONSE header for settlement receipts
-- [ ] Standard x402 payment requirements JSON format
-- [ ] Full compatibility with x402 protocol specification
-- [ ] Zero TypeScript linting errors
+- [x] HTTP 402 "Payment Required" status codes
+- [x] X-PAYMENT header support for payment payloads
+- [x] X-PAYMENT-RESPONSE header for settlement receipts
+- [x] Standard x402 payment requirements JSON format
+- [x] Full compatibility with x402 protocol specification
+- [ ] Zero TypeScript linting errors (build artifacts)
 - [ ] Comprehensive test suite
 
 ### Should Have
-- [ ] NP-based payment scheme ("nanda-points")
-- [ ] Facilitator API endpoints (/verify, /settle, /supported)
-- [ ] Integration with existing MongoDB/NP infrastructure
-- [ ] Resource Server SDK for easy MCP server integration
-- [ ] Monorepo structure with facilitator + server SDK
+- [x] NP-based payment scheme ("nanda-points")
+- [x] Facilitator API endpoints (/verify, /settle, /supported)
+- [x] Integration with existing MongoDB/NP infrastructure
+- [x] Resource Server SDK for easy MCP server integration
+- [x] Monorepo structure with facilitator + server SDK
 - [ ] Updated documentation matching implementation
 
 ### Could Have (Future Work)
@@ -57,16 +57,17 @@ Build the **server-side infrastructure** for x402-compliant payment systems that
 5. **Facilitator API**: Standard x402 facilitator endpoints
 
 ### Architecture Decisions
-- **Base Implementation**: Build from scratch using x402 protocol specification
-- **Role**: Server-side infrastructure (not client like Coinbase's x402-mcp)
-- **Transport Protocol**: Streamable HTTP for MCP (required for proper HTTP 402 handling)
-- **Security Model**: Continue with agent-name + transaction ID (defer EIP-712)
-- **Deployment**: Single server with integrated facilitator (initially)
+- **Base Implementation**: **FORK** Coinbase's working x402 server examples (Express + Advanced)
+- **Role**: Server-side infrastructure using proven x402 implementations
+- **Starting Point**: Fork `/examples/typescript/servers/express` and `/advanced`
+- **Transport Protocol**: Adapt to MCP Streamable HTTP transport
+- **Security Model**: Replace EVM/USDC with agent-name + transaction ID
+- **Payment Scheme**: Create "nanda-points" scheme replacing blockchain settlement
 - **Migration**: Complete rebuild - NO backward compatibility, NO retained code
-- **SDK Strategy**: Resource Server SDK for MCP developers to add x402 payments
+- **SDK Strategy**: Adapt x402-express middleware for MCP servers
 - **Client Compatibility**: Work with existing x402 clients (x402-axios, x402-mcp)
-- **Facilitator Discovery**: Via HTTP 402 response (standard x402 pattern)
-- **Database**: Retain MongoDB data, create new schema if needed with seed documentation
+- **Facilitator Discovery**: Use existing x402 facilitator pattern
+- **Database**: Replace blockchain calls with MongoDB/NP transactions
 
 ### Quality Standards
 - TypeScript best practices throughout
