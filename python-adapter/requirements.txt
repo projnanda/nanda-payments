@@ -1,0 +1,21 @@
+# NANDA Adapter with Payments - Python Dependencies
+
+# Core web framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# HTTP client for facilitator communication
+requests==2.31.0
+
+# Agent-to-Agent communication (this would need to be installed separately)
+# python_a2a
+
+# Development and testing
+python-dotenv==1.0.0
+
+# Optional: for production deployments
+gunicorn==21.2.0
+waitress==2.1.2
+
+# Optional: for enhanced logging
+structlog==23.2.0
