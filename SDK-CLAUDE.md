@@ -1,14 +1,14 @@
-# Claude Instructions for MCP Server SDK Development
+# Claude Instructions for NANDA Points SDKs Development
 
 ## Current Context
 
-You are working on the MCP Server SDK feature branch (`feature/mcp-server-sdk`) to create a developer-friendly SDK that simplifies x402 payment integration for MCP servers.
+You are working on the NANDA Points SDKs feature branch (`feature/mcp-server-sdk`) to create comprehensive client libraries for TypeScript and Python that simplify NANDA Points payment integration.
 
 ## Project Overview
 
-This SDK will abstract the complexity from the current `packages/shared/` implementation and provide a clean, decorator-based API for adding NANDA Points payments to MCP servers.
+These SDKs will provide language-native client libraries for integrating with NANDA Points payments and the x402 protocol. Starting with TypeScript, then Python, each SDK should feel native to its ecosystem while providing identical functionality.
 
-**Goal**: Enable developers to add payments with `@requiresPayment({ price: 10 })` decorator instead of complex middleware setup.
+**Goal**: Enable developers to integrate NANDA Points payments with simple client libraries: `npm install @nanda/payments-sdk` or `pip install nanda-payments`
 
 ## Key Documents
 
@@ -45,32 +45,35 @@ This SDK will abstract the complexity from the current `packages/shared/` implem
 
 ## Implementation Phases
 
-### Phase 1: Core SDK (Current Focus)
-Create `packages/mcp-server-sdk/` with:
-- TypeScript decorator API (`@requiresPayment`)
-- Automatic middleware injection
-- HTTP 402 response generation
-- Basic configuration system
+### Phase 1: TypeScript SDK (Current Focus)
+Create `sdks/typescript/` with:
+- Complete x402 protocol client implementation
+- Facilitator API wrapper with type safety
+- Agent balance and transaction management
+- Testing utilities and mock servers
+- npm package publication
 
-### Phase 2: Developer Experience
-- CLI scaffolding tool
-- Testing utilities
-- Comprehensive documentation
-- Example projects
+### Phase 2: Python SDK
+- Python-native async payment client
+- Framework integrations (FastAPI, Django, Flask)
+- Type hints and mypy compatibility
+- pytest fixtures and testing utilities
+- PyPI package publication
 
-### Phase 3: Advanced Features
-- Dynamic pricing strategies
-- Analytics hooks
-- Advanced error handling
+### Phase 3: Documentation & Polish
+- Comprehensive API documentation
+- Integration tutorials and examples
+- Advanced error handling and debugging
 - Performance optimization
+- CLI tools for developers
 
 ## Expected Deliverables
 
-1. **npm Package**: `@nanda/mcp-server-sdk`
-2. **Core API**: Decorator-based payment requirements
-3. **Documentation**: Getting started guide and API reference
-4. **Examples**: Working integration examples
-5. **Tests**: Unit and integration test suites
+1. **TypeScript Package**: `@nanda/payments-sdk` on npm
+2. **Python Package**: `nanda-payments` on PyPI
+3. **Client Libraries**: Complete x402 protocol clients
+4. **Documentation**: API docs and integration tutorials
+5. **Testing**: Comprehensive test suites and mock utilities
 
 ## Integration Notes
 
@@ -81,23 +84,31 @@ Create `packages/mcp-server-sdk/` with:
 
 ## Success Criteria
 
+### TypeScript SDK
 A developer should be able to:
-1. `npm install @nanda/mcp-server-sdk`
-2. Add `@requiresPayment({ price: 10 })` to an endpoint
-3. Receive proper HTTP 402 responses automatically
-4. Process payments without additional configuration
+1. `npm install @nanda/payments-sdk`
+2. Create payment client with 3 lines of configuration
+3. Make x402-compliant HTTP requests automatically
+4. Handle payment flows without understanding protocol details
 
-**Target**: 10-minute implementation time from install to first payment
+### Python SDK
+A developer should be able to:
+1. `pip install nanda-payments`
+2. Create async payment client following Python conventions
+3. Use framework integrations with FastAPI/Django
+4. Access full type hints and mypy compatibility
+
+**Target**: < 5 minutes from install to first payment request
 
 ## Previous Work Context
 
 The main x402 implementation (PR #6) provides:
-- Working facilitator with MongoDB integration
-- Express server with payment middleware
+- Working facilitator with MongoDB integration (/verify, /settle, /supported endpoints)
+- Express server with payment middleware (server-side components)
 - Comprehensive x402 protocol compliance
-- Real transaction processing
+- Real transaction processing with NANDA Points
 
-This SDK work extracts that complexity into a simple developer API.
+These SDKs provide the client-side libraries that applications use to interact with those servers.
 
 ## Commands to Remember
 
@@ -115,10 +126,12 @@ This SDK work extracts that complexity into a simple developer API.
 
 ## Next Steps
 
-1. Create `packages/mcp-server-sdk/` package structure
-2. Design decorator API and TypeScript definitions
-3. Extract and simplify middleware from `packages/shared/`
-4. Build basic integration tests
-5. Create getting started documentation
+1. Create `sdks/typescript/` package structure with proper npm configuration
+2. Implement x402 protocol client with HTTP header handling
+3. Build facilitator API wrapper (/verify, /settle, /supported)
+4. Create payment client with automatic retry logic
+5. Add comprehensive TypeScript definitions
+6. Build testing utilities and mock facilitator
+7. Create integration examples and documentation
 
-Remember: Developer experience is the primary success metric. If it's not simple enough for a 10-minute implementation, it needs more work.
+Remember: These are client libraries, not server middleware. Focus on making it easy for applications to interact with NANDA Points services, not to become payment servers themselves.

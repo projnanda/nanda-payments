@@ -1,123 +1,166 @@
-# Implementation Plan: MCP Server SDK for x402 Payments
+# Implementation Plan: NANDA Points SDKs (TypeScript & Python)
 
 ## Overview
 
-Build a developer-friendly SDK that simplifies x402 payment integration for MCP servers. Extract and abstract the complexity from the current `packages/shared/` implementation into a clean, decorator-based API.
+Build comprehensive client SDKs for NANDA Points payments, starting with TypeScript and followed by Python. These SDKs will provide language-native interfaces to the x402 protocol and facilitator APIs, enabling developers to integrate NANDA Points payments without understanding protocol details.
 
-## Phase 1: Core SDK Architecture (3-4 days)
-
-### Goal
-Create the fundamental SDK package with decorator-based payment API.
-
-### Tasks
-- [ ] Create `packages/mcp-server-sdk/` package structure
-- [ ] Extract core middleware logic from `packages/shared/`
-- [ ] Design decorator-based API (`@requiresPayment`)
-- [ ] Implement automatic route detection and middleware injection
-- [ ] Create TypeScript definitions for all public APIs
-- [ ] Build configuration system with environment detection
-- [ ] Add basic error handling and logging
-- [ ] Create simple integration test suite
-
-### Deliverables
-- [ ] Working `@nanda/mcp-server-sdk` package
-- [ ] TypeScript decorators for payment requirements
-- [ ] Automatic HTTP 402 response generation
-- [ ] Basic documentation with getting started guide
-- [ ] Integration tests validating core functionality
-
-### Estimated Time: 3-4 days
-
-## Phase 2: Developer Experience (2-3 days)
+## Phase 1: TypeScript SDK Foundation (Week 1)
 
 ### Goal
-Enhance developer experience with tooling and comprehensive documentation.
+Create the core TypeScript SDK with complete x402 protocol support and facilitator API integration.
 
 ### Tasks
-- [ ] Create CLI tool for project scaffolding (`npx create-paid-mcp-server`)
-- [ ] Build testing utilities and mock payment clients
-- [ ] Add comprehensive JSDoc documentation
-- [ ] Create interactive examples and tutorials
-- [ ] Implement automatic facilitator discovery
-- [ ] Add development vs production configuration modes
-- [ ] Build example projects demonstrating common patterns
-- [ ] Create troubleshooting guide and FAQ
+- [ ] Create `sdks/typescript/` package structure
+- [ ] Implement x402 protocol client with HTTP header handling
+- [ ] Build facilitator API wrapper (/verify, /settle, /supported)
+- [ ] Create payment client with automatic retry logic
+- [ ] Implement agent balance and transaction management
+- [ ] Add comprehensive TypeScript definitions
+- [ ] Build testing utilities and mock facilitator
+- [ ] Create integration test suite
+- [ ] Package for npm publication
 
 ### Deliverables
-- [ ] CLI scaffolding tool
-- [ ] Testing utility functions
-- [ ] Comprehensive documentation site
-- [ ] 3-5 example projects showing different use cases
-- [ ] Developer troubleshooting guide
+- [ ] Working `@nanda/payments-sdk` TypeScript package
+- [ ] Complete x402 protocol client implementation
+- [ ] Facilitator API wrapper with type safety
+- [ ] Testing utilities for developers
+- [ ] Basic documentation and examples
+- [ ] npm package ready for publication
 
-### Estimated Time: 2-3 days
+### Estimated Time: 5-7 days
 
-## Phase 3: Advanced Features (2-3 days)
+## Phase 2: Python SDK Development (Week 2)
 
 ### Goal
-Add advanced features for production use and complex scenarios.
+Create feature-complete Python SDK with async support and framework integrations.
 
 ### Tasks
-- [ ] Implement dynamic pricing strategies
-- [ ] Add payment analytics and monitoring hooks
-- [ ] Create advanced error handling with retry logic
-- [ ] Build payment caching and optimization
-- [ ] Add support for multiple pricing tiers
-- [ ] Implement webhook support for payment events
-- [ ] Create performance monitoring utilities
-- [ ] Add production deployment guides
+- [ ] Create `sdks/python/` package structure with pyproject.toml
+- [ ] Implement async payment client using aiohttp
+- [ ] Port facilitator API wrapper to Python with type hints
+- [ ] Create Python-native error handling and exceptions
+- [ ] Build FastAPI, Django, and Flask integration utilities
+- [ ] Add comprehensive type hints for mypy compatibility
+- [ ] Create pytest fixtures and testing utilities
+- [ ] Build async context managers for resource cleanup
+- [ ] Package for PyPI publication
 
 ### Deliverables
-- [ ] Dynamic pricing API
-- [ ] Analytics integration hooks
-- [ ] Production-ready error handling
+- [ ] Working `nanda-payments` Python package
+- [ ] Async payment client with aiohttp
+- [ ] Framework integrations (FastAPI, Django, Flask)
+- [ ] Type hints and mypy compatibility
+- [ ] pytest testing utilities
+- [ ] PyPI package ready for publication
+
+### Estimated Time: 5-7 days
+
+## Phase 3: Documentation & Polish (Week 3)
+
+### Goal
+Complete documentation, examples, and production readiness features.
+
+### Tasks
+- [ ] Create comprehensive API documentation for both SDKs
+- [ ] Build integration tutorials for popular frameworks
+- [ ] Create real-world usage examples and case studies
+- [ ] Add advanced error handling and debugging features
+- [ ] Implement connection pooling and performance optimization
+- [ ] Create migration guides from manual integration
+- [ ] Build CLI tools for testing and debugging
+- [ ] Add webhook support and event handling
+
+### Deliverables
+- [ ] Complete API documentation for both SDKs
+- [ ] Integration tutorials and examples
 - [ ] Performance optimization features
-- [ ] Deployment documentation
+- [ ] CLI tools for developers
+- [ ] Production deployment guides
 
-### Estimated Time: 2-3 days
+### Estimated Time: 5-7 days
 
 ## Technical Architecture
 
-### Package Structure
+### Monorepo Structure
 ```
-packages/mcp-server-sdk/
-├── src/
-│   ├── decorators/          # @requiresPayment decorator
-│   ├── middleware/          # Express middleware adapters
-│   ├── config/              # Configuration management
-│   ├── testing/             # Test utilities
-│   ├── cli/                 # CLI scaffolding tools
-│   └── types/               # TypeScript definitions
-├── examples/                # Integration examples
-├── docs/                    # Documentation
-└── tests/                   # Test suites
+sdks/
+├── typescript/              # TypeScript SDK (@nanda/payments-sdk)
+│   ├── src/
+│   │   ├── client/         # x402 Payment client
+│   │   ├── facilitator/    # Facilitator API wrapper
+│   │   ├── agent/          # Agent management utilities
+│   │   ├── types/          # TypeScript definitions
+│   │   └── testing/        # Mock servers and test utils
+│   ├── examples/           # Integration examples
+│   ├── docs/               # TypeScript-specific docs
+│   └── package.json
+├── python/                 # Python SDK (nanda-payments)
+│   ├── nanda_payments/
+│   │   ├── client.py       # Async payment client
+│   │   ├── facilitator.py  # Facilitator API wrapper
+│   │   ├── agent.py        # Agent management
+│   │   ├── types.py        # Type definitions
+│   │   ├── testing/        # Mock servers and pytest fixtures
+│   │   └── integrations/   # Framework integrations
+│   ├── examples/           # Python integration examples
+│   ├── docs/               # Python-specific docs
+│   └── pyproject.toml
+└── shared-docs/            # Cross-language documentation
 ```
 
-### Core API Design
+### TypeScript SDK API Design
 ```typescript
-// Simple static pricing
-@requiresPayment({ price: 10, description: "AI analysis" })
-app.get('/analyze', handler);
+import { NandaPaymentsClient } from '@nanda/payments-sdk';
 
-// Dynamic pricing
-@requiresPayment((req) => ({
-  price: calculatePrice(req.body),
-  description: "Custom analysis"
-}))
-app.post('/custom', handler);
-
-// Configuration
-configurePayments({
-  facilitatorUrl: "http://localhost:3001",
-  defaultRecipient: "my-service"
+const client = new NandaPaymentsClient({
+  agentName: 'my-app',
+  facilitatorUrl: 'http://localhost:3001'
 });
+
+// Make x402-compliant requests
+const response = await client.makeRequest('http://api.example.com/premium');
+if (response.paymentRequired) {
+  const payment = await client.createPayment({
+    amount: response.price,
+    recipient: response.payTo
+  });
+  const result = await client.makeRequest('http://api.example.com/premium', payment);
+}
+
+// Agent management
+const balance = await client.getBalance();
+const transactions = await client.getTransactionHistory();
+```
+
+### Python SDK API Design
+```python
+from nanda_payments import NandaPaymentsClient
+
+async with NandaPaymentsClient(
+    agent_name="my-app",
+    facilitator_url="http://localhost:3001"
+) as client:
+    # Make x402-compliant requests
+    response = await client.make_request("http://api.example.com/premium")
+    if response.payment_required:
+        payment = await client.create_payment(
+            amount=response.price,
+            recipient=response.pay_to
+        )
+        result = await client.make_request("http://api.example.com/premium", payment)
+
+    # Agent management
+    balance = await client.get_balance()
+    transactions = await client.get_transaction_history()
 ```
 
 ### Dependencies Strategy
-- Minimize external dependencies
-- Reuse battle-tested code from `packages/shared/`
-- Ensure compatibility with Express.js primarily
-- Abstract framework-specific code for future expansion
+- **TypeScript**: Minimal dependencies (axios/fetch, node built-ins)
+- **Python**: aiohttp for async HTTP, pydantic for data validation
+- Reuse protocol knowledge from `packages/shared/` but not code
+- Focus on language-native patterns and conventions
+- Comprehensive testing with minimal external test dependencies
 
 ## Integration with Existing Code
 
